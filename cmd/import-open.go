@@ -7,6 +7,7 @@ package main
 import (
 	"fmt"
 	"github.com/uvalib/easystore/uvaeasystore"
+	"github.com/uvalib/libra-metadata"
 	"log"
 	"strings"
 )
@@ -69,8 +70,20 @@ func makeOpenObject(namespace string, indir string) (uvaeasystore.EasyStoreObjec
 }
 
 func libraOpenMetadata(namespace string, indir string) (uvaeasystore.EasyStoreMetadata, error) {
-	// TBD
-	return libraMetadata{}, nil
+	meta := librametadata.OAWork{}
+
+	// populate
+
+	// serialize
+	pl, err := meta.Payload()
+	if err != nil {
+		return nil, err
+	}
+
+	return libraMetadata{
+		mimeType: meta.MimeType(),
+		payload:  pl,
+	}, nil
 }
 
 func libraOpenFields(namespace string, indir string) (uvaeasystore.EasyStoreObjectFields, error) {
