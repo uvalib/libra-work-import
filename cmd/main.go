@@ -17,6 +17,7 @@ func main() {
 	var inDir string
 	var importMode string
 	var debug bool
+	var limit int
 	var logger *log.Logger
 
 	flag.StringVar(&mode, "mode", "postgres", "Mode, sqlite, postgres, s3")
@@ -24,6 +25,7 @@ func main() {
 	flag.StringVar(&inDir, "importdir", "", "Import directory")
 	flag.StringVar(&importMode, "importmode", "", "Import mode, either etd or open")
 	flag.BoolVar(&debug, "debug", false, "Log debug information")
+	flag.IntVar(&limit, "limit", 0, "Number of items to import, 0 for no limit")
 	flag.Parse()
 
 	if debug == true {
@@ -81,14 +83,6 @@ func main() {
 		log.Fatalf("ERROR: creating easystore (%s)", err.Error())
 	}
 
-	// use the appropriate serializer
-	var serializer uvaeasystore.EasyStoreSerializer
-	if importMode == "etd" {
-		serializer = libraEtdSerializer{namespace: namespace}
-	} else {
-		serializer = libraOpenSerializer{namespace: namespace}
-	}
-
 	okCount := 0
 	errCount := 0
 	var obj uvaeasystore.EasyStoreObject
@@ -102,13 +96,19 @@ func main() {
 	for _, i := range items {
 		if i.IsDir() == true {
 
+			// if we are limiting our import count
+			if limit != 0 && ((okCount + errCount) >= limit) {
+				log.Printf("DEBUG: terminating after %d object(s)", limit)
+				break
+			}
+
 			dirname := fmt.Sprintf("%s/%s", inDir, i.Name())
 			log.Printf("DEBUG: importing from %s", dirname)
 
 			if mode == "etd" {
-				obj, err = makeObjectFromEtd(serializer, dirname)
+				obj, err = makeEtdObject(namespace, dirname)
 			} else {
-				obj, err = makeObjectFromOpen(serializer, dirname)
+				obj, err = makeOpenObject(namespace, dirname)
 			}
 
 			if err != nil {
@@ -119,18 +119,11 @@ func main() {
 
 			_, err = es.Create(obj)
 			if err != nil {
-				log.Printf("WARNING: importing oid [%s] (%s), continuing", obj.Id(), err.Error())
+				log.Printf("WARNING: importing ns/oid [%s/%s] (%s), continuing", obj.Namespace(), obj.Id(), err.Error())
 				errCount++
-				continue
 			} else {
 				okCount++
 			}
-
-			// while we are developing
-			//if okCount >= 10 {
-			//	log.Printf("DEBUG: terminating after %d object(s)", okCount)
-			//	break
-			//}
 		}
 	}
 
