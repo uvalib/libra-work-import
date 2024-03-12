@@ -9,10 +9,15 @@ import (
 	"github.com/uvalib/easystore/uvaeasystore"
 	librametadata "github.com/uvalib/libra-metadata"
 	"log"
-	"strings"
 )
 
 func makeEtdObject(namespace string, indir string) (uvaeasystore.EasyStoreObject, error) {
+
+	// import domain metadata
+	domainMetadata, err := libraEtdMetadata(indir)
+	if err != nil {
+		return nil, err
+	}
 
 	// import base object
 	obj, err := standardObject(namespace, indir)
@@ -20,48 +25,37 @@ func makeEtdObject(namespace string, indir string) (uvaeasystore.EasyStoreObject
 		return nil, err
 	}
 
-	// import fields
-	fields, err := libraEtdFields(namespace, indir)
+	// import fields from metadata
+	fields, err := libraEtdFields(*domainMetadata)
 	if err != nil {
 		return nil, err
 	}
 
+	// serialize domain metadata
+	buf, err := domainMetadata.Payload()
+	if err != nil {
+		return nil, err
+	}
+
+	// create our store metadata object
+	metadata := libraMetadata{
+		mimeType: domainMetadata.MimeType(),
+		payload:  buf,
+	}
+
+	// assign fields and serialized metadata
 	obj.SetFields(fields)
-
-	// import metadata
-	metadata, err := libraEtdMetadata(namespace, indir)
-	if err != nil {
-		return nil, err
-	}
 	obj.SetMetadata(metadata)
 
 	// import files if they exist
-	blobs := make([]uvaeasystore.EasyStoreBlob, 0)
-	ix := 0
-	var blob uvaeasystore.EasyStoreBlob
-	exists := fileExists(fmt.Sprintf("%s/fileset-1.json", indir))
-	for exists == true {
-
-		// load the blob content
-		buf := loadFile(fmt.Sprintf("%s/fileset-%d.json", indir, ix+1))
-		blob, err = makeBlobObject(namespace, buf)
-		if err != nil {
-			return nil, err
-		}
-		blob, err = loadBlobContent(indir, blob)
-		if err != nil {
-			return nil, err
-		}
-
-		// and add to the list
-		blobs = append(blobs, blob)
-		ix++
-		exists = fileExists(fmt.Sprintf("%s/fileset-%d.json", indir, ix+1))
+	blobs, err := importBlobs(namespace, indir)
+	if err != nil {
+		return nil, err
 	}
 
 	if len(blobs) != 0 {
 		obj.SetFiles(blobs)
-		log.Printf("INFO: ==> imported %d blob(s) for [%s]", ix, obj.Id())
+		log.Printf("DEBUG: imported %d files(s) for [%s]", len(blobs), obj.Id())
 	} else {
 		log.Printf("INFO: no files for [%s]", obj.Id())
 	}
@@ -69,27 +63,13 @@ func makeEtdObject(namespace string, indir string) (uvaeasystore.EasyStoreObject
 	return obj, nil
 }
 
-func libraEtdMetadata(namespace string, indir string) (uvaeasystore.EasyStoreMetadata, error) {
+func libraEtdMetadata(indir string) (*librametadata.ETDWork, error) {
 	meta := librametadata.ETDWork{}
 
-	// populate
-
-	// serialize
-	pl, err := meta.Payload()
+	buf, err := loadFile(fmt.Sprintf("%s/work.json", indir))
 	if err != nil {
 		return nil, err
 	}
-
-	return libraMetadata{
-		mimeType: meta.MimeType(),
-		payload:  pl,
-	}, nil
-}
-
-func libraEtdFields(namespace string, indir string) (uvaeasystore.EasyStoreObjectFields, error) {
-	fields := uvaeasystore.DefaultEasyStoreFields()
-
-	buf := loadFile(fmt.Sprintf("%s/work.json", indir))
 
 	// convert to a map
 	omap, err := interfaceToMap(buf)
@@ -97,40 +77,67 @@ func libraEtdFields(namespace string, indir string) (uvaeasystore.EasyStoreObjec
 		return nil, err
 	}
 
-	depositor, err := extractString(omap["depositor"])
+	depositor, err := extractString("depositor", omap["depositor"])
 	if err != nil {
 		return nil, err
 	}
 
-	creator, err := extractString(omap["creator"])
+	creator, err := extractString("creator", omap["creator"])
 	if err != nil {
 		return nil, err
 	}
 
-	visibility, err := extractString(omap["embargo_state"])
+	visibility, err := extractString("embargo_state", omap["embargo_state"])
 	if err != nil {
 		return nil, err
 	}
 
-	embargoRelease, err := extractString(omap["embargo_end_date"])
+	embargoRelease, err := extractString("embargo_end_date", omap["embargo_end_date"])
 	if err != nil {
 		// we can ignore this error
 		embargoRelease = ""
 	}
 
-	fields["visibility"] = visibility
+	meta.Visibility = visibility
 
 	if len(depositor) != 0 {
-		fields["depositor"] = strings.ReplaceAll(depositor, "@virginia.edu", "")
+		//fields["depositor"] = strings.ReplaceAll(depositor, "@virginia.edu", "")
 	}
 	if len(creator) != 0 {
-		fields["creator"] = strings.ReplaceAll(creator, "@virginia.edu", "")
+		//fields["creator"] = strings.ReplaceAll(creator, "@virginia.edu", "")
 	}
 	if len(embargoRelease) != 0 && visibility == "restricted" {
-		fields["embargoRelease"] = embargoRelease
+		meta.State.EmbargoRelease = embargoRelease
+	}
+
+	logEtdMetadata(meta)
+	return &meta, nil
+}
+
+// extract fields from the domain metadata
+func libraEtdFields(meta librametadata.ETDWork) (uvaeasystore.EasyStoreObjectFields, error) {
+	fields := uvaeasystore.DefaultEasyStoreFields()
+
+	fields["visibility"] = meta.Visibility
+
+	//if len(meta.Author) != 0 {
+	//	fields["depositor"] = strings.ReplaceAll(depositor, "@virginia.edu", "")
+	//}
+	//if len(creator) != 0 {
+	//	fields["creator"] = strings.ReplaceAll(creator, "@virginia.edu", "")
+	//}
+
+	if len(meta.State.EmbargoRelease) != 0 && meta.Visibility == "restricted" {
+		fields["embargoRelease"] = meta.State.EmbargoRelease
 	}
 
 	return fields, nil
+}
+
+func logEtdMetadata(meta librametadata.ETDWork) {
+
+	b, _ := meta.Payload()
+	fmt.Printf("<%s>\n", string(b))
 }
 
 //

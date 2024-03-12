@@ -57,6 +57,8 @@ github.com/uvalib/easystore/uvaeasystore v0.0.0-20240307124950-986a43361622 h1:R
 github.com/uvalib/easystore/uvaeasystore v0.0.0-20240307124950-986a43361622/go.mod h1:DmYip2ui/rPchmxyjXtYUwE6GSJS7bN6LumCFL1CanI=
 github.com/uvalib/libra-metadata v0.0.0-20240311172233-268a6cd72638 h1:ycBzrw9mfAtBn3tpItMr6J5V11vt3Sh7a24pMlqQ48o=
 github.com/uvalib/libra-metadata v0.0.0-20240311172233-268a6cd72638/go.mod h1:DsXjFKToNw2VE28Lf9pkV+sHhP3OS+Yr8NM0Cwy+7Lo=
+github.com/uvalib/libra-metadata v0.0.0-20240312112230-944012774d57 h1:OZ75QPdNbK21gAm7s9TRxBweQYdQ79mSZK/QKIDMNos=
+github.com/uvalib/libra-metadata v0.0.0-20240312112230-944012774d57/go.mod h1:DsXjFKToNw2VE28Lf9pkV+sHhP3OS+Yr8NM0Cwy+7Lo=
 github.com/uvalib/librabus-sdk/uvalibrabus v0.0.0-20240305143104-8588381b12ba h1:vfc4wKQ9vOKF6us/V+PTi1XbLZ5Mz24OOt09IBjCT3E=
 github.com/uvalib/librabus-sdk/uvalibrabus v0.0.0-20240305143104-8588381b12ba/go.mod h1:3zlSCNudbHP3Lj7BGfTju+2uSlWnDQ2uuLJev/ku8tg=
 golang.org/x/exp v0.0.0-20240222234643-814bf88cf225 h1:LfspQV/FYTatPTr/3HzIcmiUFH7PGP+OQ6mgDYo3yuQ=

@@ -112,14 +112,14 @@ func main() {
 			}
 
 			if err != nil {
-				log.Printf("WARNING: creating object (%s), continuing", err.Error())
+				log.Printf("ERROR: creating object (%s), continuing", err.Error())
 				errCount++
 				continue
 			}
 
 			_, err = es.Create(obj)
 			if err != nil {
-				log.Printf("WARNING: importing ns/oid [%s/%s] (%s), continuing", obj.Namespace(), obj.Id(), err.Error())
+				log.Printf("ERROR: importing ns/oid [%s/%s] (%s), continuing", obj.Namespace(), obj.Id(), err.Error())
 				errCount++
 			} else {
 				okCount++
