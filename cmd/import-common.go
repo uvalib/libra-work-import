@@ -14,6 +14,22 @@ import (
 	"os"
 )
 
+// the structure for importing is slightly different
+type LocalContributorData struct {
+	Index       int    `json:"index"`
+	ComputeID   string `json:"computing_id"`
+	FirstName   string `json:"first_name"`
+	LastName    string `json:"last_name"`
+	Department  string `json:"department"`
+	Institution string `json:"institution"`
+}
+
+type ContributorSorter []LocalContributorData
+
+func (c ContributorSorter) Len() int           { return len(c) }
+func (c ContributorSorter) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
+func (c ContributorSorter) Less(i, j int) bool { return c[i].Index < c[j].Index }
+
 func standardObject(namespace string, indir string) (uvaeasystore.EasyStoreObject, error) {
 
 	buf, err := loadFile(fmt.Sprintf("%s/work.json", indir))

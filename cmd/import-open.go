@@ -14,22 +14,6 @@ import (
 	"strings"
 )
 
-// the structure for importing is slightly different
-type OpenContributorData struct {
-	Index       int    `json:"index"`
-	ComputeID   string `json:"computing_id"`
-	FirstName   string `json:"first_name"`
-	LastName    string `json:"last_name"`
-	Department  string `json:"department"`
-	Institution string `json:"institution"`
-}
-
-type ContributorSorter []OpenContributorData
-
-func (c ContributorSorter) Len() int           { return len(c) }
-func (c ContributorSorter) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
-func (c ContributorSorter) Less(i, j int) bool { return c[i].Index < c[j].Index }
-
 func makeOpenObject(namespace string, indir string, excludeFiles bool) (uvaeasystore.EasyStoreObject, error) {
 
 	// import domain metadata
@@ -159,7 +143,6 @@ func libraOpenMetadata(indir string) (*librametadata.OAWork, error) {
 	meta.Sponsors, err = extractStringArray("sponsoring_agency", omap["sponsoring_agency"])
 	if err != nil {
 		log.Printf("WARNING: %s", err.Error())
-		//return nil, err
 	}
 
 	meta.RelatedURLs, err = extractStringArray("related_url", omap["related_url"])
@@ -168,7 +151,7 @@ func libraOpenMetadata(indir string) (*librametadata.OAWork, error) {
 		//return nil, err
 	}
 
-	meta.Notes, err = extractString("published_date", omap["published_date"])
+	meta.Notes, err = extractString("notes", omap["notes"])
 	if err != nil {
 		log.Printf("WARNING: %s", err.Error())
 		//return nil, err
@@ -205,6 +188,7 @@ func libraOpenFields(meta librametadata.OAWork) (uvaeasystore.EasyStoreObjectFie
 
 	fields := uvaeasystore.DefaultEasyStoreFields()
 
+	// FIXME
 	if len(meta.Authors) != 0 && len(meta.Authors[0].ComputeID) != 0 {
 		fields["depositor"] = meta.Authors[0].ComputeID
 	}
@@ -232,7 +216,7 @@ func libraOpenContributors(indir string) ([]librametadata.ContributorData, error
 
 func loadContributorData(indir string, template string) ([]librametadata.ContributorData, error) {
 
-	local := make([]OpenContributorData, 0)
+	local := make([]LocalContributorData, 0)
 	ix := 1
 	exists := fileExists(fmt.Sprintf(template, indir, ix))
 	for exists == true {
@@ -244,7 +228,7 @@ func loadContributorData(indir string, template string) ([]librametadata.Contrib
 		}
 
 		// decode into local structure
-		var person OpenContributorData
+		var person LocalContributorData
 		err = json.Unmarshal(buf, &person)
 		if err != nil {
 			return nil, err
@@ -269,8 +253,8 @@ func loadContributorData(indir string, template string) ([]librametadata.Contrib
 		})
 	}
 	return people, nil
-
 }
+
 func libraOpenVisibility(indir string) string {
 
 	fname := fmt.Sprintf("%s/visibility.json", indir)

@@ -111,7 +111,7 @@ func main() {
 			dirname := fmt.Sprintf("%s/%s", inDir, i.Name())
 			log.Printf("DEBUG: importing from %s", dirname)
 
-			if mode == "etd" {
+			if importMode == "etd" {
 				obj, err = makeEtdObject(namespace, dirname, excludeFiles)
 			} else {
 				obj, err = makeOpenObject(namespace, dirname, excludeFiles)
