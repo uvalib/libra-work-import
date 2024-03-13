@@ -11,7 +11,7 @@ import (
 	"log"
 )
 
-func makeEtdObject(namespace string, indir string) (uvaeasystore.EasyStoreObject, error) {
+func makeEtdObject(namespace string, indir string, excludeFiles bool) (uvaeasystore.EasyStoreObject, error) {
 
 	// import domain metadata
 	domainMetadata, err := libraEtdMetadata(indir)
@@ -47,17 +47,20 @@ func makeEtdObject(namespace string, indir string) (uvaeasystore.EasyStoreObject
 	obj.SetFields(fields)
 	obj.SetMetadata(metadata)
 
-	// import files if they exist
-	blobs, err := importBlobs(namespace, indir)
-	if err != nil {
-		return nil, err
-	}
+	// do we include files?
+	if excludeFiles == false {
+		// import files if they exist
+		blobs, err := importBlobs(namespace, indir)
+		if err != nil {
+			return nil, err
+		}
 
-	if len(blobs) != 0 {
-		obj.SetFiles(blobs)
-		log.Printf("DEBUG: imported %d files(s) for [%s]", len(blobs), obj.Id())
-	} else {
-		log.Printf("INFO: no files for [%s]", obj.Id())
+		if len(blobs) != 0 {
+			obj.SetFiles(blobs)
+			log.Printf("DEBUG: imported %d files(s) for [%s]", len(blobs), obj.Id())
+		} else {
+			log.Printf("INFO: no files for [%s]", obj.Id())
+		}
 	}
 
 	return obj, nil

@@ -30,7 +30,7 @@ func (c ContributorSorter) Len() int           { return len(c) }
 func (c ContributorSorter) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
 func (c ContributorSorter) Less(i, j int) bool { return c[i].Index < c[j].Index }
 
-func makeOpenObject(namespace string, indir string) (uvaeasystore.EasyStoreObject, error) {
+func makeOpenObject(namespace string, indir string, excludeFiles bool) (uvaeasystore.EasyStoreObject, error) {
 
 	// import domain metadata
 	domainMetadata, err := libraOpenMetadata(indir)
@@ -66,17 +66,20 @@ func makeOpenObject(namespace string, indir string) (uvaeasystore.EasyStoreObjec
 	obj.SetFields(fields)
 	obj.SetMetadata(metadata)
 
-	// import files if they exist
-	blobs, err := importBlobs(namespace, indir)
-	if err != nil {
-		return nil, err
-	}
+	// do we include files?
+	if excludeFiles == false {
+		// import files if they exist
+		blobs, err := importBlobs(namespace, indir)
+		if err != nil {
+			return nil, err
+		}
 
-	if len(blobs) != 0 {
-		obj.SetFiles(blobs)
-		log.Printf("DEBUG: imported %d files(s) for [%s]", len(blobs), obj.Id())
-	} else {
-		log.Printf("INFO: no files for [%s]", obj.Id())
+		if len(blobs) != 0 {
+			obj.SetFiles(blobs)
+			log.Printf("DEBUG: imported %d files(s) for [%s]", len(blobs), obj.Id())
+		} else {
+			log.Printf("INFO: no files for [%s]", obj.Id())
+		}
 	}
 
 	return obj, nil

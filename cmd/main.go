@@ -17,6 +17,7 @@ func main() {
 	var inDir string
 	var importMode string
 	var debug bool
+	var excludeFiles bool
 	var limit int
 	var logger *log.Logger
 
@@ -25,6 +26,7 @@ func main() {
 	flag.StringVar(&inDir, "importdir", "", "Import directory")
 	flag.StringVar(&importMode, "importmode", "", "Import mode, either etd or open")
 	flag.BoolVar(&debug, "debug", false, "Log debug information")
+	flag.BoolVar(&excludeFiles, "nofiles", false, "Do not import files")
 	flag.IntVar(&limit, "limit", 0, "Number of items to import, 0 for no limit")
 	flag.Parse()
 
@@ -92,6 +94,10 @@ func main() {
 		log.Fatalf("ERROR: %s", err.Error())
 	}
 
+	if excludeFiles == true {
+		log.Printf("INFO: EXCLUDING file import!!")
+	}
+
 	// go through our list
 	for _, i := range items {
 		if i.IsDir() == true {
@@ -106,9 +112,9 @@ func main() {
 			log.Printf("DEBUG: importing from %s", dirname)
 
 			if mode == "etd" {
-				obj, err = makeEtdObject(namespace, dirname)
+				obj, err = makeEtdObject(namespace, dirname, excludeFiles)
 			} else {
-				obj, err = makeOpenObject(namespace, dirname)
+				obj, err = makeOpenObject(namespace, dirname, excludeFiles)
 			}
 
 			if err != nil {
