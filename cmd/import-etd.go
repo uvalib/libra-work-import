@@ -16,8 +16,8 @@ import (
 
 func makeEtdObject(namespace string, indir string, excludeFiles bool) (uvaeasystore.EasyStoreObject, error) {
 
-	// import domain metadata
-	domainMetadata, err := libraEtdMetadata(indir)
+	// import domain metadata plus any extras that we need that dont have a place in the metadata
+	domainMetadata, domainExtras, err := libraEtdMetadata(indir)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +29,7 @@ func makeEtdObject(namespace string, indir string, excludeFiles bool) (uvaeasyst
 	}
 
 	// import fields from metadata
-	fields, err := libraEtdFields(*domainMetadata)
+	fields, err := libraEtdFields(domainMetadata, domainExtras)
 	if err != nil {
 		return nil, err
 	}
@@ -69,18 +69,19 @@ func makeEtdObject(namespace string, indir string, excludeFiles bool) (uvaeasyst
 	return obj, nil
 }
 
-func libraEtdMetadata(indir string) (*librametadata.ETDWork, error) {
+func libraEtdMetadata(indir string) (librametadata.ETDWork, importExtras, error) {
 	meta := librametadata.ETDWork{}
+	extra := importExtras{}
 
 	buf, err := loadFile(fmt.Sprintf("%s/work.json", indir))
 	if err != nil {
-		return nil, err
+		return meta, extra, err
 	}
 
 	// convert to a map
 	omap, err := interfaceToMap(buf)
 	if err != nil {
-		return nil, err
+		return meta, extra, err
 	}
 
 	meta.Degree, err = extractString("degree", omap["degree"])
@@ -111,7 +112,7 @@ func libraEtdMetadata(indir string) (*librametadata.ETDWork, error) {
 		//return nil, err
 	}
 
-	meta.License, err = extractString("license", omap["license"])
+	meta.License, err = extractFirstString("rights", omap["rights"])
 	if err != nil {
 		log.Printf("WARNING: %s", err.Error())
 		//return nil, err
@@ -153,11 +154,11 @@ func libraEtdMetadata(indir string) (*librametadata.ETDWork, error) {
 		//return nil, err
 	}
 
-	// FIXME
-	//depositor, err := extractString("depositor", omap["depositor"])
-	//if err != nil {
-	//	return nil, err
-	//}
+	extra.depositor, err = extractString("depositor", omap["depositor"])
+	if err != nil {
+		log.Printf("WARNING: %s", err.Error())
+		//return nil, err
+	}
 
 	meta.Author, err = libraEtdAuthor(omap)
 	if err != nil {
@@ -171,42 +172,93 @@ func libraEtdMetadata(indir string) (*librametadata.ETDWork, error) {
 		//return nil, err
 	}
 
-	visibility, err := extractString("embargo_state", omap["embargo_state"])
+	meta.Visibility, err = extractString("embargo_state", omap["embargo_state"])
 	if err != nil {
-		return nil, err
+		log.Printf("WARNING: %s", err.Error())
+		//return nil, err
 	}
 
-	embargoRelease, err := extractString("embargo_end_date", omap["embargo_end_date"])
+	extra.createDate, err = extractString("date_created", omap["date_created"])
 	if err != nil {
-		// we can ignore this error
-		embargoRelease = ""
+		log.Printf("WARNING: %s", err.Error())
+		//return nil, err
 	}
 
-	if len(embargoRelease) != 0 && visibility == "restricted" {
-		meta.State.EmbargoRelease = embargoRelease
+	//
+	// extra stuff that does not form part of the metadata but is stored in the object fields
+	//
+
+	extra.adminNotes, err = extractStringArray("admin_notes", omap["admin_notes"])
+	if err != nil {
+		log.Printf("WARNING: %s", err.Error())
+		//return nil, err
+	}
+
+	extra.doi, err = extractString("identifier", omap["identifier"])
+	if err != nil {
+		log.Printf("WARNING: %s", err.Error())
+		//return nil, err
+	}
+
+	extra.depositor, err = extractString("depositor", omap["depositor"])
+	if err != nil {
+		log.Printf("WARNING: %s", err.Error())
+		//return nil, err
+	}
+
+	extra.embargoRelease, err = extractString("embargo_end_date", omap["embargo_end_date"])
+	if err != nil {
+		log.Printf("WARNING: %s", err.Error())
+		//return nil, err
+	}
+
+	extra.createDate, err = extractString("date_created", omap["date_created"])
+	if err != nil {
+		log.Printf("WARNING: %s", err.Error())
+		//return nil, err
 	}
 
 	//logEtdMetadata(meta)
-	return &meta, nil
+	return meta, extra, nil
 }
 
-// extract fields from the domain metadata
-func libraEtdFields(meta librametadata.ETDWork) (uvaeasystore.EasyStoreObjectFields, error) {
+// extract fields from the domain metadata plus the extras
+func libraEtdFields(meta librametadata.ETDWork, extra importExtras) (uvaeasystore.EasyStoreObjectFields, error) {
 	fields := uvaeasystore.DefaultEasyStoreFields()
 
-	// FIXME
-	if len(meta.Author.ComputeID) != 0 {
-		fields["depositor"] = meta.Author.ComputeID
+	// all imported items get these
+	fields["disposition"] = "imported"
+	fields["email-sent"] = "imported"
+
+	// all imported ETD's get these
+	fields["sis-sent"] = "imported"
+
+	if len(extra.adminNotes) != 0 {
+		fields["admin-notes"] = strings.Join(extra.adminNotes, " ")
 	}
+
 	if len(meta.Author.ComputeID) != 0 {
 		fields["author"] = meta.Author.ComputeID
 	}
 
+	if len(extra.createDate) != 0 {
+		fields["create-date"] = extra.createDate
+	}
+
+	if len(extra.depositor) != 0 {
+		fields["depositor"] = extra.depositor
+	}
+
+	if len(extra.doi) != 0 {
+		fields["doi"] = extra.doi
+	}
+
+	if len(extra.embargoRelease) != 0 && meta.Visibility == "restricted" {
+		fields["embargo-release"] = extra.embargoRelease
+	}
+
 	if len(meta.Visibility) != 0 {
 		fields["visibility"] = meta.Visibility
-	}
-	if len(meta.State.EmbargoRelease) != 0 && meta.Visibility == "restricted" {
-		fields["embargoRelease"] = meta.State.EmbargoRelease
 	}
 
 	return fields, nil

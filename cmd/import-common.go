@@ -24,6 +24,14 @@ type LocalContributorData struct {
 	Institution string `json:"institution"`
 }
 
+type importExtras struct {
+	adminNotes     []string
+	createDate     string
+	depositor      string
+	doi            string
+	embargoRelease string
+}
+
 type ContributorSorter []LocalContributorData
 
 func (c ContributorSorter) Len() int           { return len(c) }
@@ -123,7 +131,6 @@ func loadBlobContent(indir string, blob uvaeasystore.EasyStoreBlob) (uvaeasystor
 	return b, nil
 }
 
-// terminate on error
 func loadFile(filename string) ([]byte, error) {
 	buf, err := os.ReadFile(filename)
 	if err != nil {
@@ -147,7 +154,7 @@ func interfaceToMap(i interface{}) (map[string]interface{}, error) {
 
 	// deserialize to a map
 	var objmap map[string]interface{}
-	if err := json.Unmarshal([]byte(s), &objmap); err != nil {
+	if err := json.Unmarshal(s, &objmap); err != nil {
 		return nil, fmt.Errorf("%q: %w", err.Error(), uvaeasystore.ErrDeserialize)
 	}
 

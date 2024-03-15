@@ -16,8 +16,8 @@ import (
 
 func makeOpenObject(namespace string, indir string, excludeFiles bool) (uvaeasystore.EasyStoreObject, error) {
 
-	// import domain metadata
-	domainMetadata, err := libraOpenMetadata(indir)
+	// import domain metadata plus any extras that we need that dont have a place in the metadata
+	domainMetadata, domainExtras, err := libraOpenMetadata(indir)
 	if err != nil {
 		return nil, err
 	}
@@ -28,8 +28,8 @@ func makeOpenObject(namespace string, indir string, excludeFiles bool) (uvaeasys
 		return nil, err
 	}
 
-	// extract fields from metadata
-	fields, err := libraOpenFields(*domainMetadata)
+	// extract fields from metadata and extra stuff
+	fields, err := libraOpenFields(domainMetadata, domainExtras)
 	if err != nil {
 		return nil, err
 	}
@@ -69,19 +69,20 @@ func makeOpenObject(namespace string, indir string, excludeFiles bool) (uvaeasys
 	return obj, nil
 }
 
-func libraOpenMetadata(indir string) (*librametadata.OAWork, error) {
+func libraOpenMetadata(indir string) (librametadata.OAWork, importExtras, error) {
 	var err error
 	meta := librametadata.OAWork{}
+	extra := importExtras{}
 
 	buf, err := loadFile(fmt.Sprintf("%s/work.json", indir))
 	if err != nil {
-		return nil, err
+		return meta, extra, err
 	}
 
 	// convert buffer to a map
 	omap, err := interfaceToMap(buf)
 	if err != nil {
-		return nil, err
+		return meta, extra, err
 	}
 
 	// meta.Visibility handled below
@@ -106,7 +107,7 @@ func libraOpenMetadata(indir string) (*librametadata.OAWork, error) {
 		//return nil, err
 	}
 
-	// TODO: meta.License
+	// meta.License handled below
 
 	meta.Languages, err = extractStringArray("language", omap["language"])
 	if err != nil {
@@ -158,7 +159,7 @@ func libraOpenMetadata(indir string) (*librametadata.OAWork, error) {
 	}
 
 	//
-	// get extras that do not appear in the work.json file
+	// other stuff that does not appear in the work.json file
 	//
 
 	meta.Authors, err = libraOpenAuthors(indir)
@@ -173,34 +174,82 @@ func libraOpenMetadata(indir string) (*librametadata.OAWork, error) {
 		//return nil, err
 	}
 
+	meta.License = libraOpenRights(indir)
 	meta.Visibility = libraOpenVisibility(indir)
-	embargoRelease := libraOpenEmbargo(indir)
-	if len(embargoRelease) != 0 && meta.Visibility == "restricted" {
-		meta.State.EmbargoRelease = embargoRelease
+
+	//
+	// extra stuff that does not form part of the metadata but is stored in the object fields
+	//
+
+	extra.adminNotes, err = extractStringArray("admin_notes", omap["admin_notes"])
+	if err != nil {
+		log.Printf("WARNING: %s", err.Error())
+		//return nil, err
+	}
+
+	extra.depositor, err = extractString("depositor", omap["depositor"])
+	if err != nil {
+		log.Printf("WARNING: %s", err.Error())
+		//return nil, err
+	}
+
+	extra.doi, err = extractString("doi", omap["doi"])
+	if err != nil {
+		log.Printf("WARNING: %s", err.Error())
+		//return nil, err
+	}
+
+	extra.embargoRelease = libraOpenEmbargo(indir)
+
+	extra.createDate, err = extractString("date_created", omap["date_created"])
+	if err != nil {
+		log.Printf("WARNING: %s", err.Error())
+		//return nil, err
 	}
 
 	//logOpenMetadata(meta)
-	return &meta, nil
+	return meta, extra, nil
 }
 
-// extract fields from the domain metadata
-func libraOpenFields(meta librametadata.OAWork) (uvaeasystore.EasyStoreObjectFields, error) {
+// extract fields from the domain metadata plus the extras
+func libraOpenFields(meta librametadata.OAWork, extra importExtras) (uvaeasystore.EasyStoreObjectFields, error) {
 
 	fields := uvaeasystore.DefaultEasyStoreFields()
 
-	// FIXME
-	if len(meta.Authors) != 0 && len(meta.Authors[0].ComputeID) != 0 {
-		fields["depositor"] = meta.Authors[0].ComputeID
+	// all imported items get these
+	fields["disposition"] = "imported"
+	fields["email-sent"] = "imported"
+
+	if len(extra.adminNotes) != 0 {
+		fields["admin-notes"] = strings.Join(extra.adminNotes, " ")
 	}
+
 	if len(meta.Authors) != 0 && len(meta.Authors[0].ComputeID) != 0 {
 		fields["author"] = meta.Authors[0].ComputeID
 	}
 
+	if len(extra.createDate) != 0 {
+		fields["create-date"] = extra.createDate
+	}
+
+	if len(extra.depositor) != 0 {
+		fields["depositor"] = extra.depositor
+	}
+
+	if len(extra.doi) != 0 {
+		fields["doi"] = extra.doi
+	}
+
+	if len(extra.embargoRelease) != 0 && meta.Visibility == "restricted" {
+		fields["embargo-release"] = extra.embargoRelease
+	}
+
+	if len(meta.ResourceType) != 0 {
+		fields["resource-type"] = meta.ResourceType
+	}
+
 	if len(meta.Visibility) != 0 {
 		fields["visibility"] = meta.Visibility
-	}
-	if len(meta.State.EmbargoRelease) != 0 && meta.Visibility == "restricted" {
-		fields["embargoRelease"] = meta.State.EmbargoRelease
 	}
 
 	return fields, nil
@@ -275,6 +324,33 @@ func libraOpenVisibility(indir string) string {
 		return ""
 	}
 	str, err := extractString("visibility", omap["visibility"])
+	if err != nil {
+		// assume no visibility information
+		return ""
+	}
+	return str
+}
+
+func libraOpenRights(indir string) string {
+
+	fname := fmt.Sprintf("%s/rights.json", indir)
+	exists := fileExists(fname)
+	if exists == false {
+		// assume no visibility information
+		return ""
+	}
+
+	buf, err := loadFile(fname)
+	if err != nil {
+		// assume no visibility information
+		return ""
+	}
+	omap, err := interfaceToMap(buf)
+	if err != nil {
+		// assume no visibility information
+		return ""
+	}
+	str, err := extractString("rights", omap["rights"])
 	if err != nil {
 		// assume no visibility information
 		return ""
