@@ -224,7 +224,8 @@ func libraOpenFields(meta librametadata.OAWork, extra importExtras) (uvaeasystor
 
 	// all imported items get these
 	fields["disposition"] = "imported"
-	fields["email-sent"] = "imported"
+	fields["invitation-sent"] = "imported"
+	fields["submitted-sent"] = "imported"
 
 	if len(extra.adminNotes) != 0 {
 		fields["admin-notes"] = strings.Join(extra.adminNotes, " ")

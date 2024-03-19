@@ -234,7 +234,8 @@ func libraEtdFields(meta librametadata.ETDWork, extra importExtras) (uvaeasystor
 
 	// all imported items get these
 	fields["disposition"] = "imported"
-	fields["email-sent"] = "imported"
+	fields["invitation-sent"] = "imported"
+	fields["submitted-sent"] = "imported"
 
 	// all imported ETD's get these
 	fields["sis-sent"] = "imported"
