@@ -218,6 +218,12 @@ func libraEtdMetadata(indir string) (librametadata.ETDWork, importExtras, error)
 		//return nil, err
 	}
 
+	extra.source, err = extractString("work_source", omap["work_source"])
+	if err != nil {
+		log.Printf("WARNING: %s", err.Error())
+		//return nil, err
+	}
+
 	//logEtdMetadata(meta)
 	return meta, extra, nil
 }
@@ -255,6 +261,11 @@ func libraEtdFields(meta librametadata.ETDWork, extra importExtras) (uvaeasystor
 
 	if len(extra.embargoRelease) != 0 && meta.Visibility == "restricted" {
 		fields["embargo-release"] = extra.embargoRelease
+	}
+
+	if len(extra.source) != 0 {
+		fields["source"] = strings.Trim(
+			strings.Split(extra.source, ":")[0], " ")
 	}
 
 	if len(meta.Visibility) != 0 {

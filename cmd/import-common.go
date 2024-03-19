@@ -30,6 +30,7 @@ type importExtras struct {
 	depositor      string
 	doi            string
 	embargoRelease string
+	source         string
 }
 
 type ContributorSorter []LocalContributorData

@@ -207,6 +207,12 @@ func libraOpenMetadata(indir string) (librametadata.OAWork, importExtras, error)
 		//return nil, err
 	}
 
+	extra.source, err = extractString("work_source", omap["work_source"])
+	if err != nil {
+		log.Printf("WARNING: %s", err.Error())
+		//return nil, err
+	}
+
 	//logOpenMetadata(meta)
 	return meta, extra, nil
 }
@@ -246,6 +252,11 @@ func libraOpenFields(meta librametadata.OAWork, extra importExtras) (uvaeasystor
 
 	if len(meta.ResourceType) != 0 {
 		fields["resource-type"] = meta.ResourceType
+	}
+
+	if len(extra.source) != 0 {
+		fields["source"] = strings.Trim(
+			strings.Split(extra.source, ":")[0], " ")
 	}
 
 	if len(meta.Visibility) != 0 {
