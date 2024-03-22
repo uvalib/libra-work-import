@@ -265,6 +265,7 @@ func libraEtdFields(meta librametadata.ETDWork, extra importExtras) (uvaeasystor
 	}
 
 	if len(extra.source) != 0 {
+		fields["source-id"] = extra.source
 		fields["source"] = strings.Trim(
 			strings.Split(extra.source, ":")[0], " ")
 	}
