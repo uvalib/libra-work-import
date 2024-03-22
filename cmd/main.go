@@ -85,6 +85,9 @@ func main() {
 		log.Fatalf("ERROR: creating easystore (%s)", err.Error())
 	}
 
+	// important, cleanup properly
+	defer es.Close()
+
 	okCount := 0
 	errCount := 0
 	var obj uvaeasystore.EasyStoreObject
