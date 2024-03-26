@@ -224,6 +224,7 @@ func libraOpenFields(meta librametadata.OAWork, extra importExtras) (uvaeasystor
 
 	// all imported items get these
 	fields["disposition"] = "imported"
+	fields["draft"] = "false"
 	fields["invitation-sent"] = "imported"
 	fields["submitted-sent"] = "imported"
 
@@ -244,7 +245,8 @@ func libraOpenFields(meta librametadata.OAWork, extra importExtras) (uvaeasystor
 	}
 
 	if len(extra.doi) != 0 {
-		fields["doi"] = extra.doi
+		// turn the DOI into a URL
+		fields["doi"] = fmt.Sprintf("https://doi.org/%s", extra.doi)
 	}
 
 	if len(extra.embargoRelease) != 0 && meta.Visibility == "restricted" {

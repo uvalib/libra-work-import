@@ -194,7 +194,7 @@ func libraEtdMetadata(indir string) (librametadata.ETDWork, importExtras, error)
 		//return nil, err
 	}
 
-	extra.doi, err = extractString("identifier", omap["identifier"])
+	extra.doi, err = extractString("permanent_url", omap["permanent_url"])
 	if err != nil {
 		log.Printf("WARNING: %s", err.Error())
 		//return nil, err
@@ -234,6 +234,7 @@ func libraEtdFields(meta librametadata.ETDWork, extra importExtras) (uvaeasystor
 
 	// all imported items get these
 	fields["disposition"] = "imported"
+	fields["draft"] = "false"
 	fields["invitation-sent"] = "imported"
 	fields["submitted-sent"] = "imported"
 
@@ -257,7 +258,10 @@ func libraEtdFields(meta librametadata.ETDWork, extra importExtras) (uvaeasystor
 	}
 
 	if len(extra.doi) != 0 {
-		fields["doi"] = extra.doi
+		// cleanup the DOI
+		doi := strings.Replace(extra.doi, "https://doi.org/", "", 1)
+		doi = strings.Replace(doi, "http://dx.doi.org/", "", 1)
+		fields["doi"] = fmt.Sprintf("https://doi.org/%s", extra.doi)
 	}
 
 	if len(extra.embargoRelease) != 0 && meta.Visibility == "restricted" {
