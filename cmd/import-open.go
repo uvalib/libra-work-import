@@ -276,6 +276,14 @@ func libraOpenFields(meta librametadata.OAWork, extra importExtras) (uvaeasystor
 		}
 	}
 
+	// field name change
+	if fields["default-visibility"] == "authenticated" {
+		fields["default-visibility"] = "uva"
+	}
+	if fields["embargo-release-visibility"] == "authenticated" {
+		fields["embargo-release-visibility"] = "uva"
+	}
+
 	if len(meta.ResourceType) != 0 {
 		fields["resource-type"] = meta.ResourceType
 	}

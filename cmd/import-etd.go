@@ -282,6 +282,14 @@ func libraEtdFields(meta librametadata.ETDWork, extra importExtras) (uvaeasystor
 		}
 	}
 
+	// field name change
+	if fields["default-visibility"] == "authenticated" {
+		fields["default-visibility"] = "uva"
+	}
+	if fields["embargo-release-visibility"] == "authenticated" {
+		fields["embargo-release-visibility"] = "uva"
+	}
+
 	if len(extra.source) != 0 {
 		fields["source-id"] = extra.source
 		fields["source"] = strings.Trim(
