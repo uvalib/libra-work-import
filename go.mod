@@ -3,8 +3,8 @@ module github.com/uvalib/easystore-import
 go 1.21.7
 
 require (
-	github.com/uvalib/easystore/uvaeasystore v0.0.0-20240322120923-cf2c6fa0adcb
-	github.com/uvalib/libra-metadata v0.0.0-20240315170823-7a62819ea523
+	github.com/uvalib/easystore/uvaeasystore v0.0.0-20240325171428-3cd21e36ef4f
+	github.com/uvalib/libra-metadata v0.0.0-20240326193310-1a50217188a4
 )
 
 require (
@@ -32,6 +32,6 @@ require (
 	github.com/lib/pq v1.10.9 // indirect
 	github.com/mattn/go-sqlite3 v1.14.22 // indirect
 	github.com/rs/xid v1.5.0 // indirect
-	github.com/uvalib/librabus-sdk/uvalibrabus v0.0.0-20240320135050-911bc823e589 // indirect
-	golang.org/x/exp v0.0.0-20240318143956-a85f2c67cd81 // indirect
+	github.com/uvalib/librabus-sdk/uvalibrabus v0.0.0-20240325152856-57ba633b6d1b // indirect
+	golang.org/x/exp v0.0.0-20240325151524-a685a6edb6d8 // indirect
 )

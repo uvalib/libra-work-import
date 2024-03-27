@@ -12,7 +12,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
+
+var location, _ = time.LoadLocation("America/New_York")
 
 // the structure for importing is slightly different
 type LocalContributorData struct {
@@ -24,13 +27,23 @@ type LocalContributorData struct {
 	Institution string `json:"institution"`
 }
 
+// libra ETD and some libra Open have this
+type EmbargoDetails struct {
+	VisibilityDuring string `json:"visibility_during_embargo"`
+	VisibilityAfter  string `json:"visibility_after_embargo"`
+	ReleaseDate      string `json:"embargo_release_date"`
+}
+
 type importExtras struct {
-	adminNotes     []string
-	createDate     string
-	depositor      string
-	doi            string
-	embargoRelease string
-	source         string
+	adminNotes       []string
+	createDate       string
+	defaultVis       string // default visibility
+	depositor        string
+	doi              string
+	embargoRelease   string // embargo release date (if appropriate)
+	embargoVisDuring string // visibility during embargo
+	embargoVisAfter  string // visibility after embargo
+	source           string
 }
 
 type ContributorSorter []LocalContributorData
@@ -145,6 +158,27 @@ func fileExists(filename string) bool {
 	return err == nil || errors.Is(err, os.ErrNotExist) == false
 }
 
+func loadEmbargo(indir string) (*EmbargoDetails, error) {
+	fname := fmt.Sprintf("%s/embargo.json", indir)
+	exists := fileExists(fname)
+	if exists == false {
+		return nil, os.ErrNotExist
+	}
+
+	buf, err := loadFile(fname)
+	if err != nil {
+		return nil, err
+	}
+
+	var embargo EmbargoDetails
+	err = json.Unmarshal(buf, &embargo)
+	if err != nil {
+		return nil, err
+	}
+
+	return &embargo, nil
+}
+
 func interfaceToMap(i interface{}) (map[string]interface{}, error) {
 
 	// assume we are being passed a []byte
@@ -195,6 +229,36 @@ func extractString(name string, i interface{}) (string, error) {
 		return "", fmt.Errorf("%q: %w", fmt.Sprintf("%s is not a string", name), uvaeasystore.ErrDeserialize)
 	}
 	return field, nil
+}
+
+func inTheFuture(datetime string) bool {
+	if len(datetime) == 0 {
+		return false
+	}
+
+	format := "2006-01-02T15:04:05+00:00" // yeah, crap right
+	dt, err := time.ParseInLocation(format, datetime, location)
+	if err != nil {
+		log.Printf("ERROR: bad date format [%s] (%s)", datetime, err.Error())
+		return false
+	}
+
+	return dt.After(time.Now())
+}
+
+func expectedEmbargoDateFormat(datetime string) bool {
+	if len(datetime) == 0 {
+		return false
+	}
+
+	format := "2006-01-02T15:04:05+00:00" // yeah, crap right
+	_, err := time.ParseInLocation(format, datetime, location)
+	if err != nil {
+		log.Printf("ERROR: bad date format [%s] (%s)", datetime, err.Error())
+		return false
+	}
+
+	return true
 }
 
 //

@@ -175,7 +175,6 @@ func libraOpenMetadata(indir string) (librametadata.OAWork, importExtras, error)
 	}
 
 	meta.License = libraOpenRights(indir)
-	meta.Visibility = libraOpenVisibility(indir)
 
 	//
 	// extra stuff that does not form part of the metadata but is stored in the object fields
@@ -199,7 +198,13 @@ func libraOpenMetadata(indir string) (librametadata.OAWork, importExtras, error)
 		//return nil, err
 	}
 
-	extra.embargoRelease = libraOpenEmbargo(indir)
+	extra.defaultVis = libraOpenVisibility(indir)
+	embargo, err := loadEmbargo(indir)
+	if err == nil {
+		extra.embargoVisAfter = embargo.VisibilityAfter
+		extra.embargoVisDuring = embargo.VisibilityDuring
+		extra.embargoRelease = embargo.ReleaseDate
+	}
 
 	extra.createDate, err = extractString("date_created", omap["date_created"])
 	if err != nil {
@@ -244,13 +249,31 @@ func libraOpenFields(meta librametadata.OAWork, extra importExtras) (uvaeasystor
 		fields["depositor"] = extra.depositor
 	}
 
+	// we may adjust this later if we have embargo information
+	if len(extra.defaultVis) != 0 {
+		fields["default-visibility"] = extra.defaultVis
+	}
+
 	if len(extra.doi) != 0 {
 		// turn the DOI into a URL
+		extra.doi = strings.Replace(extra.doi, "doi:", "", 1)
 		fields["doi"] = fmt.Sprintf("https://doi.org/%s", extra.doi)
 	}
 
-	if len(extra.embargoRelease) != 0 && meta.Visibility == "restricted" {
+	// embargo visibility calculations
+	if len(extra.embargoRelease) != 0 {
 		fields["embargo-release"] = extra.embargoRelease
+		if inTheFuture(extra.embargoRelease) == true {
+			if len(extra.embargoVisDuring) != 0 {
+				fields["default-visibility"] = extra.embargoVisDuring
+			}
+		}
+
+		if len(extra.embargoVisAfter) != 0 {
+			fields["embargo-release-visibility"] = extra.embargoVisAfter
+		} else {
+			fields["embargo-release-visibility"] = extra.defaultVis
+		}
 	}
 
 	if len(meta.ResourceType) != 0 {
@@ -261,10 +284,6 @@ func libraOpenFields(meta librametadata.OAWork, extra importExtras) (uvaeasystor
 		fields["source-id"] = extra.source
 		fields["source"] = strings.Trim(
 			strings.Split(extra.source, ":")[0], " ")
-	}
-
-	if len(meta.Visibility) != 0 {
-		fields["visibility"] = meta.Visibility
 	}
 
 	return fields, nil
