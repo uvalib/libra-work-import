@@ -11,8 +11,43 @@ import (
 	"github.com/uvalib/libra-metadata"
 	"log"
 	"sort"
+	"strconv"
 	"strings"
 )
+
+type Right struct {
+	url  string
+	term string
+}
+
+var openRights = []Right{
+	{url: "http://creativecommons.org/licenses/by/4.0/",
+		term: "Attribution 4.0 International (CC BY)"},
+
+	{url: "http://creativecommons.org/licenses/by-nd/4.0",
+		term: "Attribution-NoDerivatives 4.0 International (CC BY-ND)"},
+
+	{url: "http://creativecommons.org/licenses/by-sa/4.0/",
+		term: "Attribution-ShareAlike 4.0 International (CC BY-SA)"},
+
+	{url: "http://creativecommons.org/licenses/by-nc/4.0/",
+		term: "Attribution-NonCommercial 4.0 International (CC BY-NC)"},
+
+	{url: "http://creativecommons.org/licenses/by-nc-nd/4.0/",
+		term: "Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND)"},
+
+	{url: "http://creativecommons.org/licenses/by-nc-sa/4.0",
+		term: "Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA)"},
+
+	{url: "http://creativecommons.org/publicdomain/zero/1.0/",
+		term: "CC0 1.0 Universal"},
+
+	{url: "",
+		term: "All rights reserved (no additional license for public reuse)"},
+
+	{url: "https://creativecommons.org/licenses/by/2.0/",
+		term: "Attribution 2.0 Generic (CC BY)"},
+}
 
 func makeOpenObject(namespace string, indir string, excludeFiles bool) (uvaeasystore.EasyStoreObject, error) {
 
@@ -90,13 +125,11 @@ func libraOpenMetadata(indir string) (librametadata.OAWork, importExtras, error)
 	meta.ResourceType, err = extractString("resource_type", omap["resource_type"])
 	if err != nil {
 		log.Printf("WARNING: %s", err.Error())
-		//return nil, err
 	}
 
 	meta.Title, err = extractFirstString("title", omap["title"])
 	if err != nil {
 		log.Printf("WARNING: %s", err.Error())
-		//return nil, err
 	}
 
 	// meta.Authors handled below
@@ -104,7 +137,6 @@ func libraOpenMetadata(indir string) (librametadata.OAWork, importExtras, error)
 	meta.Abstract, err = extractString("abstract", omap["abstract"])
 	if err != nil {
 		log.Printf("WARNING: %s", err.Error())
-		//return nil, err
 	}
 
 	// meta.License handled below
@@ -112,13 +144,11 @@ func libraOpenMetadata(indir string) (librametadata.OAWork, importExtras, error)
 	meta.Languages, err = extractStringArray("language", omap["language"])
 	if err != nil {
 		log.Printf("WARNING: %s", err.Error())
-		//return nil, err
 	}
 
 	meta.Keywords, err = extractStringArray("keyword", omap["keyword"])
 	if err != nil {
 		log.Printf("WARNING: %s", err.Error())
-		//return nil, err
 	}
 
 	// meta.Contributors handled below
@@ -126,19 +156,16 @@ func libraOpenMetadata(indir string) (librametadata.OAWork, importExtras, error)
 	meta.Publisher, err = extractString("publisher", omap["publisher"])
 	if err != nil {
 		log.Printf("WARNING: %s", err.Error())
-		//return nil, err
 	}
 
 	meta.Citation, err = extractString("source_citation", omap["source_citation"])
 	if err != nil {
 		log.Printf("WARNING: %s", err.Error())
-		//return nil, err
 	}
 
 	meta.PublicationDate, err = extractString("published_date", omap["published_date"])
 	if err != nil {
 		log.Printf("WARNING: %s", err.Error())
-		//return nil, err
 	}
 
 	meta.Sponsors, err = extractStringArray("sponsoring_agency", omap["sponsoring_agency"])
@@ -149,13 +176,11 @@ func libraOpenMetadata(indir string) (librametadata.OAWork, importExtras, error)
 	meta.RelatedURLs, err = extractStringArray("related_url", omap["related_url"])
 	if err != nil {
 		log.Printf("WARNING: %s", err.Error())
-		//return nil, err
 	}
 
 	meta.Notes, err = extractString("notes", omap["notes"])
 	if err != nil {
 		log.Printf("WARNING: %s", err.Error())
-		//return nil, err
 	}
 
 	//
@@ -165,16 +190,19 @@ func libraOpenMetadata(indir string) (librametadata.OAWork, importExtras, error)
 	meta.Authors, err = libraOpenAuthors(indir)
 	if err != nil {
 		log.Printf("WARNING: %s", err.Error())
-		//return nil, err
 	}
 
 	meta.Contributors, err = libraOpenContributors(indir)
 	if err != nil {
 		log.Printf("WARNING: %s", err.Error())
-		//return nil, err
 	}
 
-	meta.License = libraOpenRights(indir)
+	rightsIndex, err := extractFirstString("rights", omap["rights"])
+	if err != nil {
+		log.Printf("WARNING: %s", err.Error())
+	}
+
+	meta.License, meta.LicenseURL = libraOpenRights(rightsIndex)
 
 	//
 	// extra stuff that does not form part of the metadata but is stored in the object fields
@@ -284,6 +312,10 @@ func libraOpenFields(meta librametadata.OAWork, extra importExtras) (uvaeasystor
 		fields["embargo-release-visibility"] = "uva"
 	}
 
+	if len(meta.PublicationDate) != 0 {
+		fields["publish-date"] = meta.PublicationDate
+	}
+
 	if len(meta.ResourceType) != 0 {
 		fields["resource-type"] = meta.ResourceType
 	}
@@ -373,31 +405,23 @@ func libraOpenVisibility(indir string) string {
 	return str
 }
 
-func libraOpenRights(indir string) string {
+func libraOpenRights(rightsIndex string) (string, string) {
 
-	fname := fmt.Sprintf("%s/rights.json", indir)
-	exists := fileExists(fname)
-	if exists == false {
-		// assume no visibility information
-		return ""
+	ix, err := strconv.Atoi(rightsIndex)
+	if err != nil {
+		log.Printf("ERROR: %s", err.Error())
+		// assume no rights information
+		return "", ""
 	}
 
-	buf, err := loadFile(fname)
-	if err != nil {
-		// assume no visibility information
-		return ""
+	// incorrect number
+	if ix >= len(openRights) {
+		log.Printf("ERROR: %s too big", rightsIndex)
+		// assume no rights information
+		return "", ""
 	}
-	omap, err := interfaceToMap(buf)
-	if err != nil {
-		// assume no visibility information
-		return ""
-	}
-	str, err := extractString("rights", omap["rights"])
-	if err != nil {
-		// assume no visibility information
-		return ""
-	}
-	return str
+
+	return openRights[ix].term, openRights[ix].url
 }
 
 func libraOpenEmbargo(indir string) string {

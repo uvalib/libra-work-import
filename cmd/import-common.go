@@ -43,6 +43,7 @@ type importExtras struct {
 	embargoRelease   string // embargo release date (if appropriate)
 	embargoVisDuring string // visibility during embargo
 	embargoVisAfter  string // visibility after embargo
+	pubDate          string
 	source           string
 }
 
