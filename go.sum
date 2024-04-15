@@ -53,10 +53,10 @@ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZN
 github.com/rs/xid v1.5.0 h1:mKX4bl4iPYJtEIxp6CYiUuLQ/8DYMoz0PUdtGgMFRVc=
 github.com/rs/xid v1.5.0/go.mod h1:trrq9SKmegXys3aeAKXMUTdJsYXVwGY3RLcfgqegfbg=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
-github.com/uvalib/easystore/uvaeasystore v0.0.0-20240411131136-9da0b224c172 h1:NqINVLQG+dtWh4gXFh1uPui1CZTBIZ/3nS4fdSukNco=
-github.com/uvalib/easystore/uvaeasystore v0.0.0-20240411131136-9da0b224c172/go.mod h1:DmYip2ui/rPchmxyjXtYUwE6GSJS7bN6LumCFL1CanI=
-github.com/uvalib/libra-metadata v0.0.0-20240405123602-a54d2a70fae3 h1:8v8Ky05N+bnWmjY3l+dSkfeldkx0jWU/vCIMtmI40O4=
-github.com/uvalib/libra-metadata v0.0.0-20240405123602-a54d2a70fae3/go.mod h1:DsXjFKToNw2VE28Lf9pkV+sHhP3OS+Yr8NM0Cwy+7Lo=
+github.com/uvalib/easystore/uvaeasystore v0.0.0-20240411133422-fa321d3d2147 h1:Ldh1D3CxTCUjKHLh6tHzPCbbXwdAntfkur6HLB0HJ38=
+github.com/uvalib/easystore/uvaeasystore v0.0.0-20240411133422-fa321d3d2147/go.mod h1:DmYip2ui/rPchmxyjXtYUwE6GSJS7bN6LumCFL1CanI=
+github.com/uvalib/libra-metadata v0.0.0-20240412181700-2e19429dbfa8 h1:xoRp8X2weBLZXBLwJUzgw9WWo1SwimFdG3fbPjeijcg=
+github.com/uvalib/libra-metadata v0.0.0-20240412181700-2e19429dbfa8/go.mod h1:DsXjFKToNw2VE28Lf9pkV+sHhP3OS+Yr8NM0Cwy+7Lo=
 github.com/uvalib/librabus-sdk/uvalibrabus v0.0.0-20240325152856-57ba633b6d1b h1:f/El0hJx6yuQVeQElDRZr5ShaAuQUfigVSoBUHpQt5w=
 github.com/uvalib/librabus-sdk/uvalibrabus v0.0.0-20240325152856-57ba633b6d1b/go.mod h1:3zlSCNudbHP3Lj7BGfTju+2uSlWnDQ2uuLJev/ku8tg=
 golang.org/x/exp v0.0.0-20240409090435-93d18d7e34b8 h1:ESSUROHIBHg7USnszlcdmjBEwdMj9VUvU+OPk4yl2mc=

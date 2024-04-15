@@ -3,8 +3,8 @@ module github.com/uvalib/easystore-import
 go 1.21.7
 
 require (
-	github.com/uvalib/easystore/uvaeasystore v0.0.0-20240411131136-9da0b224c172
-	github.com/uvalib/libra-metadata v0.0.0-20240405123602-a54d2a70fae3
+	github.com/uvalib/easystore/uvaeasystore v0.0.0-20240411133422-fa321d3d2147
+	github.com/uvalib/libra-metadata v0.0.0-20240412181700-2e19429dbfa8
 )
 
 require (
