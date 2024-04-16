@@ -4,7 +4,7 @@ go 1.21.7
 
 require (
 	github.com/uvalib/easystore/uvaeasystore v0.0.0-20240411133422-fa321d3d2147
-	github.com/uvalib/libra-metadata v0.0.0-20240412181700-2e19429dbfa8
+	github.com/uvalib/libra-metadata v0.0.0-20240415185307-75fea509a389
 )
 
 require (

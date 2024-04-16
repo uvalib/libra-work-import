@@ -90,6 +90,11 @@ func libraEtdMetadata(indir string) (librametadata.ETDWork, importExtras, error)
 		return meta, extra, err
 	}
 
+	meta.Department, err = extractString("department", omap["department"])
+	if err != nil {
+		log.Printf("WARNING: %s", err.Error())
+	}
+
 	meta.Degree, err = extractString("degree", omap["degree"])
 	if err != nil {
 		log.Printf("WARNING: %s", err.Error())
