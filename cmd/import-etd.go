@@ -243,7 +243,7 @@ func libraEtdFields(meta librametadata.ETDWork, extra importExtras) (uvaeasystor
 	}
 
 	if len(extra.depositor) != 0 {
-		fields["depositor"] = extra.depositor
+		fields["depositor"] = strings.Replace(extra.depositor, "@virginia.edu", "", -1)
 	}
 
 	// we may adjust this later if we have embargo information
