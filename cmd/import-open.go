@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"github.com/uvalib/easystore/uvaeasystore"
 	"github.com/uvalib/libra-metadata"
-	"log"
 	"sort"
 	"strconv"
 	"strings"
@@ -95,9 +94,9 @@ func makeOpenObject(namespace string, indir string, excludeFiles bool) (uvaeasys
 
 		if len(blobs) != 0 {
 			obj.SetFiles(blobs)
-			log.Printf("DEBUG: imported %d files(s) for [%s]", len(blobs), obj.Id())
+			logDebug(fmt.Sprintf("imported %d files(s) for [%s]", len(blobs), obj.Id()))
 		} else {
-			log.Printf("INFO: no files for [%s]", obj.Id())
+			logInfo(fmt.Sprintf("no files for [%s]", obj.Id()))
 		}
 	}
 
@@ -124,63 +123,63 @@ func libraOpenMetadata(indir string) (librametadata.OAWork, importExtras, error)
 
 	meta.ResourceType, err = extractString("resource_type", omap["resource_type"])
 	if err != nil {
-		log.Printf("WARNING: %s", err.Error())
+		logWarning(err.Error())
 	}
 
 	meta.Title, err = extractFirstString("title", omap["title"])
 	if err != nil {
-		log.Printf("WARNING: %s", err.Error())
+		logWarning(err.Error())
 	}
 
 	// meta.Authors handled below
 
 	meta.Abstract, err = extractString("abstract", omap["abstract"])
 	if err != nil {
-		log.Printf("WARNING: %s", err.Error())
+		logWarning(err.Error())
 	}
 
 	// meta.License handled below
 
 	meta.Languages, err = extractStringArray("language", omap["language"])
 	if err != nil {
-		log.Printf("WARNING: %s", err.Error())
+		logWarning(err.Error())
 	}
 
 	meta.Keywords, err = extractStringArray("keyword", omap["keyword"])
 	if err != nil {
-		log.Printf("WARNING: %s", err.Error())
+		logWarning(err.Error())
 	}
 
 	// meta.Contributors handled below
 
 	meta.Publisher, err = extractString("publisher", omap["publisher"])
 	if err != nil {
-		log.Printf("WARNING: %s", err.Error())
+		logWarning(err.Error())
 	}
 
 	meta.Citation, err = extractString("source_citation", omap["source_citation"])
 	if err != nil {
-		log.Printf("WARNING: %s", err.Error())
+		logWarning(err.Error())
 	}
 
 	meta.PublicationDate, err = extractString("published_date", omap["published_date"])
 	if err != nil {
-		log.Printf("WARNING: %s", err.Error())
+		logWarning(err.Error())
 	}
 
 	meta.Sponsors, err = extractStringArray("sponsoring_agency", omap["sponsoring_agency"])
 	if err != nil {
-		log.Printf("WARNING: %s", err.Error())
+		logWarning(err.Error())
 	}
 
 	meta.RelatedURLs, err = extractStringArray("related_url", omap["related_url"])
 	if err != nil {
-		log.Printf("WARNING: %s", err.Error())
+		logWarning(err.Error())
 	}
 
 	meta.Notes, err = extractString("notes", omap["notes"])
 	if err != nil {
-		log.Printf("WARNING: %s", err.Error())
+		logWarning(err.Error())
 	}
 
 	//
@@ -189,17 +188,17 @@ func libraOpenMetadata(indir string) (librametadata.OAWork, importExtras, error)
 
 	meta.Authors, err = libraOpenAuthors(indir)
 	if err != nil {
-		log.Printf("WARNING: %s", err.Error())
+		logWarning(err.Error())
 	}
 
 	meta.Contributors, err = libraOpenContributors(indir)
 	if err != nil {
-		log.Printf("WARNING: %s", err.Error())
+		logWarning(err.Error())
 	}
 
 	rightsIndex, err := extractFirstString("rights", omap["rights"])
 	if err != nil {
-		log.Printf("WARNING: %s", err.Error())
+		logWarning(err.Error())
 	}
 
 	meta.License, meta.LicenseURL = libraOpenRights(rightsIndex)
@@ -210,20 +209,17 @@ func libraOpenMetadata(indir string) (librametadata.OAWork, importExtras, error)
 
 	extra.adminNotes, err = extractStringArray("admin_notes", omap["admin_notes"])
 	if err != nil {
-		log.Printf("WARNING: %s", err.Error())
-		//return nil, err
+		logWarning(err.Error())
 	}
 
 	extra.depositor, err = extractString("depositor", omap["depositor"])
 	if err != nil {
-		log.Printf("WARNING: %s", err.Error())
-		//return nil, err
+		logWarning(err.Error())
 	}
 
 	extra.doi, err = extractString("doi", omap["doi"])
 	if err != nil {
-		log.Printf("WARNING: %s", err.Error())
-		//return nil, err
+		logWarning(err.Error())
 	}
 
 	extra.defaultVis = libraOpenVisibility(indir)
@@ -236,14 +232,12 @@ func libraOpenMetadata(indir string) (librametadata.OAWork, importExtras, error)
 
 	extra.createDate, err = extractString("date_created", omap["date_created"])
 	if err != nil {
-		log.Printf("WARNING: %s", err.Error())
-		//return nil, err
+		logWarning(err.Error())
 	}
 
 	extra.source, err = extractString("work_source", omap["work_source"])
 	if err != nil {
-		log.Printf("WARNING: %s", err.Error())
-		//return nil, err
+		logWarning(err.Error())
 	}
 
 	//logOpenMetadata(meta)
@@ -409,14 +403,14 @@ func libraOpenRights(rightsIndex string) (string, string) {
 
 	ix, err := strconv.Atoi(rightsIndex)
 	if err != nil {
-		log.Printf("ERROR: %s", err.Error())
+		logError(err.Error())
 		// assume no rights information
 		return "", ""
 	}
 
 	// incorrect number
 	if ix >= len(openRights) {
-		log.Printf("ERROR: %s too big", rightsIndex)
+		logError(fmt.Sprintf("%s too big", rightsIndex))
 		// assume no rights information
 		return "", ""
 	}

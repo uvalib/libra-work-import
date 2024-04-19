@@ -9,6 +9,9 @@ import (
 	"strconv"
 )
 
+// global logging level
+var logLevel string
+
 // main entry point
 func main() {
 
@@ -18,6 +21,7 @@ func main() {
 	var importMode string
 	var debug bool
 	var excludeFiles bool
+	var dryRun bool
 	var limit int
 	var logger *log.Logger
 
@@ -27,7 +31,9 @@ func main() {
 	flag.StringVar(&importMode, "importmode", "", "Import mode, either etd or open")
 	flag.BoolVar(&debug, "debug", false, "Log debug information")
 	flag.BoolVar(&excludeFiles, "nofiles", false, "Do not import files")
+	flag.BoolVar(&dryRun, "dryrun", false, "Process but do not actually import")
 	flag.IntVar(&limit, "limit", 0, "Number of items to import, 0 for no limit")
+	flag.StringVar(&logLevel, "loglevel", "E", "Logging level (D|I|W|E)")
 	flag.Parse()
 
 	if debug == true {
@@ -36,15 +42,23 @@ func main() {
 
 	// validate
 	if len(inDir) == 0 {
-		log.Fatalf("ERROR: must specify import dir")
+		logError("must specify import dir")
+		os.Exit(1)
 	}
 	_, err := os.Stat(inDir)
 	if err != nil {
-		log.Fatalf("ERROR: import dir does not exist or is not readable (%s)", err.Error())
+		logError(fmt.Sprintf("import dir does not exist or is not readable (%s)", err.Error()))
+		os.Exit(1)
 	}
 
 	if importMode != "etd" && importMode != "open" {
-		log.Fatalf("ERROR: import mode must be 'etd' or 'open'")
+		logError("import mode must be etd|open")
+		os.Exit(1)
+	}
+
+	if logLevel != "D" && logLevel != "I" && logLevel != "W" && logLevel != "E" {
+		logError("logging level must be D|I|W|E")
+		os.Exit(1)
 	}
 
 	var config uvaeasystore.EasyStoreConfig
@@ -77,12 +91,14 @@ func main() {
 			Log:        logger,
 		}
 	default:
-		log.Fatalf("ERROR: unsupported mode (%s)", mode)
+		logError(fmt.Sprintf("unsupported mode (%s)", mode))
+		os.Exit(1)
 	}
 
 	es, err := uvaeasystore.NewEasyStore(config)
 	if err != nil {
-		log.Fatalf("ERROR: creating easystore (%s)", err.Error())
+		logError(fmt.Sprintf("creating easystore (%s)", err.Error()))
+		os.Exit(1)
 	}
 
 	// important, cleanup properly
@@ -94,11 +110,16 @@ func main() {
 
 	items, err := os.ReadDir(inDir)
 	if err != nil {
-		log.Fatalf("ERROR: %s", err.Error())
+		logError(err.Error())
+		os.Exit(1)
 	}
 
 	if excludeFiles == true {
-		log.Printf("INFO: EXCLUDING file import!!")
+		logAlways("Excluding file import!!")
+	}
+
+	if dryRun == true {
+		logAlways("Dryrun, NO import!!")
 	}
 
 	// go through our list
@@ -107,12 +128,12 @@ func main() {
 
 			// if we are limiting our import count
 			if limit != 0 && ((okCount + errCount) >= limit) {
-				log.Printf("DEBUG: terminating after %d object(s)", limit)
+				logDebug(fmt.Sprintf("terminating after %d object(s)", limit))
 				break
 			}
 
 			dirname := fmt.Sprintf("%s/%s", inDir, i.Name())
-			log.Printf("DEBUG: importing from %s", dirname)
+			logInfo(fmt.Sprintf("importing from %s", dirname))
 
 			if importMode == "etd" {
 				obj, err = makeEtdObject(namespace, dirname, excludeFiles)
@@ -121,22 +142,30 @@ func main() {
 			}
 
 			if err != nil {
-				log.Printf("ERROR: creating object (%s), continuing", err.Error())
+				logError(fmt.Sprintf("creating object (%s), continuing", err.Error()))
 				errCount++
 				continue
 			}
 
-			_, err = es.Create(obj)
-			if err != nil {
-				log.Printf("ERROR: importing ns/oid [%s/%s] (%s), continuing", obj.Namespace(), obj.Id(), err.Error())
-				errCount++
-			} else {
-				okCount++
+			// if we are configured to import
+			if dryRun == false {
+				_, err = es.Create(obj)
+				if err != nil {
+					logError(fmt.Sprintf("importing ns/oid [%s/%s] (%s), continuing", obj.Namespace(), obj.Id(), err.Error()))
+					errCount++
+					continue
+				}
 			}
+
+			okCount++
 		}
 	}
 
-	log.Printf("INFO: terminate normally, imported %d object(s) and %d error(s)", okCount, errCount)
+	verb := "imported"
+	if dryRun == true {
+		verb = "processed"
+	}
+	logAlways(fmt.Sprintf("terminate normally, %s %d object(s) and %d error(s)", verb, okCount, errCount))
 }
 
 func asIntWithDefault(str string, def int) int {

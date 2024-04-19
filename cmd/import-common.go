@@ -102,7 +102,7 @@ func importBlobs(namespace string, indir string) ([]uvaeasystore.EasyStoreBlob, 
 			// and add to the list
 			blobs = append(blobs, blob)
 		} else {
-			log.Printf("WARNING: empty blob name, skipping")
+			logWarning(fmt.Sprintf("empty blob name, skipping"))
 		}
 		ix++
 		exists = fileExists(fmt.Sprintf("%s/fileset-%d.json", indir, ix))
@@ -240,7 +240,7 @@ func inTheFuture(datetime string) bool {
 	format := "2006-01-02T15:04:05+00:00" // yeah, crap right
 	dt, err := time.ParseInLocation(format, datetime, location)
 	if err != nil {
-		log.Printf("ERROR: bad date format [%s] (%s)", datetime, err.Error())
+		logError(fmt.Sprintf("bad date format [%s] (%s)", datetime, err.Error()))
 		return false
 	}
 
@@ -255,11 +255,37 @@ func expectedEmbargoDateFormat(datetime string) bool {
 	format := "2006-01-02T15:04:05+00:00" // yeah, crap right
 	_, err := time.ParseInLocation(format, datetime, location)
 	if err != nil {
-		log.Printf("ERROR: bad date format [%s] (%s)", datetime, err.Error())
+		logError(fmt.Sprintf("bad date format [%s] (%s)", datetime, err.Error()))
 		return false
 	}
 
 	return true
+}
+
+func logDebug(msg string) {
+	if logLevel == "D" {
+		log.Printf("DEBUG: %s", msg)
+	}
+}
+
+func logInfo(msg string) {
+	if logLevel == "D" || logLevel == "I" {
+		log.Printf("INFO: %s", msg)
+	}
+}
+
+func logWarning(msg string) {
+	if logLevel == "D" || logLevel == "I" || logLevel == "W" {
+		log.Printf("WARNING: %s", msg)
+	}
+}
+
+func logError(msg string) {
+	log.Printf("ERROR: %s", msg)
+}
+
+func logAlways(msg string) {
+	log.Printf("INFO: %s", msg)
 }
 
 //
