@@ -389,9 +389,8 @@ func cleanupDate(date string) string {
 		return str
 	}
 
-	logError(fmt.Sprintf("unable to interpret date [%s]\n", date))
-
-	return date
+	logError(fmt.Sprintf("unable to interpret date [%s], setting empty\n", date))
+	return ""
 }
 
 // make a fixed format date given a date and expected format
