@@ -258,7 +258,8 @@ func libraEtdFields(meta librametadata.ETDWork, extra importExtras) (uvaeasystor
 	}
 
 	// embargo visibility calculations
-	if expectedEmbargoDateFormat(extra.embargoRelease) {
+	if len(extra.embargoRelease) != 0 {
+		extra.embargoRelease = cleanupDate(extra.embargoRelease)
 		fields["embargo-release"] = extra.embargoRelease
 		if inTheFuture(extra.embargoRelease) == true {
 			if len(extra.embargoVisDuring) != 0 {
@@ -282,7 +283,10 @@ func libraEtdFields(meta librametadata.ETDWork, extra importExtras) (uvaeasystor
 	}
 
 	if len(extra.pubDate) != 0 {
-		fields["publish-date"] = extra.pubDate
+		date := cleanupDate(extra.pubDate)
+		if len(date) != 0 {
+			fields["publish-date"] = date
+		}
 	}
 
 	if len(extra.source) != 0 {

@@ -12,10 +12,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
+	"strings"
 	"time"
 )
-
-var location, _ = time.LoadLocation("America/New_York")
 
 // the structure for importing is slightly different
 type LocalContributorData struct {
@@ -232,13 +232,14 @@ func extractString(name string, i interface{}) (string, error) {
 	return field, nil
 }
 
+// take a cleaned up embargo date and determine if it is in the future
 func inTheFuture(datetime string) bool {
 	if len(datetime) == 0 {
 		return false
 	}
 
-	format := "2006-01-02T15:04:05+00:00" // yeah, crap right
-	dt, err := time.ParseInLocation(format, datetime, location)
+	format := "2006-01-02T15:04:05Z"
+	dt, err := time.Parse(format, datetime)
 	if err != nil {
 		logError(fmt.Sprintf("bad date format [%s] (%s)", datetime, err.Error()))
 		return false
@@ -247,19 +248,173 @@ func inTheFuture(datetime string) bool {
 	return dt.After(time.Now())
 }
 
-func expectedEmbargoDateFormat(datetime string) bool {
-	if len(datetime) == 0 {
-		return false
+// attempt to clean up the date
+func cleanupDate(date string) string {
+
+	// remove periods, commas and a trailing 'th' on the date
+	clean := strings.Replace(date, ".", "", -1)
+	clean = strings.Replace(clean, "th,", "", -1)
+	clean = strings.Replace(clean, ",", "", -1)
+
+	// remove leading and trailing spaces
+	clean = strings.TrimSpace(clean)
+
+	// first try "YYYY"
+	format := "2006"
+	str, err := makeDate(clean, format)
+	if err == nil {
+		//logAlways(fmt.Sprintf("IN [%s] OUT [%s]", date, str))
+		return str
 	}
 
-	format := "2006-01-02T15:04:05+00:00" // yeah, crap right
-	_, err := time.ParseInLocation(format, datetime, location)
+	// next try "YYYY-MM-DD"
+	format = "2006-01-02"
+	str, err = makeDate(clean, format)
+	if err == nil {
+		//logAlways(fmt.Sprintf("IN [%s] OUT [%s]", date, str))
+		return str
+	}
+
+	// next try "Month (short) Day, YYYY"
+	format = "Jan 2 2006"
+	str, err = makeDate(clean, format)
+	if err == nil {
+		//logAlways(fmt.Sprintf("IN [%s] OUT [%s]", date, str))
+		return str
+	}
+
+	// next try "Month (long) Day, YYYY"
+	format = "January 2 2006"
+	str, err = makeDate(clean, format)
+	if err == nil {
+		//logAlways(fmt.Sprintf("IN [%s] OUT [%s]", date, str))
+		return str
+	}
+
+	// next try "Month (short) YYYY"
+	format = "Jan 2006"
+	str, err = makeDate(clean, format)
+	if err == nil {
+		//logAlways(fmt.Sprintf("IN [%s] OUT [%s]", date, str))
+		return str
+	}
+
+	// next try "Month (long) YYYY"
+	format = "January 2006"
+	str, err = makeDate(clean, format)
+	if err == nil {
+		//logAlways(fmt.Sprintf("IN [%s] OUT [%s]", date, str))
+		return str
+	}
+
+	// next try "MM/DD/YYYY"
+	format = "01/02/2006"
+	str, err = makeDate(clean, format)
+	if err == nil {
+		//logAlways(fmt.Sprintf("IN [%s] OUT [%s]", date, str))
+		return str
+	}
+
+	// next try "YYYY/MM/DD"
+	format = "2006/01/02"
+	str, err = makeDate(clean, format)
+	if err == nil {
+		//logAlways(fmt.Sprintf("IN [%s] OUT [%s]", date, str))
+		return str
+	}
+
+	// next try "Day Month (short) YYYY"
+	format = "2 Jan 2006"
+	str, err = makeDate(clean, format)
+	if err == nil {
+		//logAlways(fmt.Sprintf("IN [%s] OUT [%s]", date, str))
+		return str
+	}
+
+	// next try "Day Month (long) YYYY"
+	format = "2 January 2006"
+	str, err = makeDate(clean, format)
+	if err == nil {
+		//logAlways(fmt.Sprintf("IN [%s] OUT [%s]", date, str))
+		return str
+	}
+
+	// next try "YYYY-MM"
+	format = "2006-01"
+	str, err = makeDate(clean, format)
+	if err == nil {
+		//logAlways(fmt.Sprintf("IN [%s] OUT [%s]", date, str))
+		return str
+	}
+
+	// next try "M/D/YYYY"
+	format = "1/2/2006"
+	str, err = makeDate(clean, format)
+	if err == nil {
+		//logAlways(fmt.Sprintf("IN [%s] OUT [%s]", date, str))
+		return str
+	}
+
+	// next try "M/D/YY"
+	format = "1/2/06"
+	str, err = makeDate(clean, format)
+	if err == nil {
+		//logAlways(fmt.Sprintf("IN [%s] OUT [%s]", date, str))
+		return str
+	}
+
+	// next try "M-D-YYYY"
+	format = "1-2-2006"
+	str, err = makeDate(clean, format)
+	if err == nil {
+		//logAlways(fmt.Sprintf("IN [%s] OUT [%s]", date, str))
+		return str
+	}
+
+	// next this
+	if len(clean) > 19 {
+		format = "2006-01-02T15:04:05"
+		str, err = makeDate(clean[:19], format)
+		if err == nil {
+			//logAlways(fmt.Sprintf("IN [%s] OUT [%s]", date, str))
+			return str
+		}
+	}
+
+	// really finally
+	str = extractYYYY(clean)
+	if len(str) != 0 {
+		str = fmt.Sprintf("%s-01-01T00:00:00Z", str)
+		//logAlways(fmt.Sprintf("IN [%s] OUT [%s]", date, str))
+		return str
+	}
+
+	logError(fmt.Sprintf("unable to interpret date [%s]\n", date))
+
+	return date
+}
+
+// make a fixed format date given a date and expected format
+func makeDate(date string, format string) (string, error) {
+	tm, err := time.Parse(format, date)
 	if err != nil {
-		logError(fmt.Sprintf("bad date format [%s] (%s)", datetime, err.Error()))
-		return false
+		return "", err
+	}
+	return fmt.Sprintf("%04d-%02d-%02dT%02d:%02d:%02dZ",
+		tm.Year(), tm.Month(), tm.Day(), tm.Hour(), tm.Minute(), tm.Second()), nil
+}
+
+// attempt to extract a 4 digit year from the date string (crap, I know)
+func extractYYYY(date string) string {
+	if len(date) == 0 {
+		return ""
 	}
 
-	return true
+	re := regexp.MustCompile("\\d{4}")
+	if re.MatchString(date) == true {
+		return re.FindAllString(date, 1)[0]
+	}
+	return ""
 }
 
 func logDebug(msg string) {

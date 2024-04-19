@@ -284,6 +284,7 @@ func libraOpenFields(meta librametadata.OAWork, extra importExtras) (uvaeasystor
 
 	// embargo visibility calculations
 	if len(extra.embargoRelease) != 0 {
+		extra.embargoRelease = cleanupDate(extra.embargoRelease)
 		fields["embargo-release"] = extra.embargoRelease
 		if inTheFuture(extra.embargoRelease) == true {
 			if len(extra.embargoVisDuring) != 0 {
@@ -307,7 +308,10 @@ func libraOpenFields(meta librametadata.OAWork, extra importExtras) (uvaeasystor
 	}
 
 	if len(meta.PublicationDate) != 0 {
-		fields["publish-date"] = meta.PublicationDate
+		date := cleanupDate(meta.PublicationDate)
+		if len(date) != 0 {
+			fields["publish-date"] = date
+		}
 	}
 
 	if len(meta.ResourceType) != 0 {
