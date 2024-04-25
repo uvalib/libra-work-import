@@ -53,12 +53,12 @@ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZN
 github.com/rs/xid v1.5.0 h1:mKX4bl4iPYJtEIxp6CYiUuLQ/8DYMoz0PUdtGgMFRVc=
 github.com/rs/xid v1.5.0/go.mod h1:trrq9SKmegXys3aeAKXMUTdJsYXVwGY3RLcfgqegfbg=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
-github.com/uvalib/easystore/uvaeasystore v0.0.0-20240411133422-fa321d3d2147 h1:Ldh1D3CxTCUjKHLh6tHzPCbbXwdAntfkur6HLB0HJ38=
-github.com/uvalib/easystore/uvaeasystore v0.0.0-20240411133422-fa321d3d2147/go.mod h1:DmYip2ui/rPchmxyjXtYUwE6GSJS7bN6LumCFL1CanI=
+github.com/uvalib/easystore/uvaeasystore v0.0.0-20240424183643-2cd1c98a69ec h1:fQtQMiWw0jXJw92H8i2nFKTxZ+bgt978ZJ9zXEETMag=
+github.com/uvalib/easystore/uvaeasystore v0.0.0-20240424183643-2cd1c98a69ec/go.mod h1:7M0hEkOeLqG9KVrJyXiLgBPDf7/xzX3uxHtzQ8ltTGg=
 github.com/uvalib/libra-metadata v0.0.0-20240415185307-75fea509a389 h1:cv6g98ryW8lnHVrb1xMQSunnAJMQG483O8X2c8hPWHo=
 github.com/uvalib/libra-metadata v0.0.0-20240415185307-75fea509a389/go.mod h1:DsXjFKToNw2VE28Lf9pkV+sHhP3OS+Yr8NM0Cwy+7Lo=
-github.com/uvalib/librabus-sdk/uvalibrabus v0.0.0-20240417152615-5f766fefdac7 h1:ncOXFarFNzcYGaG0defuIAoiODsQCzaZ9MwY1jc0cCA=
-github.com/uvalib/librabus-sdk/uvalibrabus v0.0.0-20240417152615-5f766fefdac7/go.mod h1:3zlSCNudbHP3Lj7BGfTju+2uSlWnDQ2uuLJev/ku8tg=
+github.com/uvalib/librabus-sdk/uvalibrabus v0.0.0-20240424181938-23a2768958e8 h1:qpq+dwHg8xFy5bCABr757v/GVEby7Z0t9G7j8Bb0ulk=
+github.com/uvalib/librabus-sdk/uvalibrabus v0.0.0-20240424181938-23a2768958e8/go.mod h1:3zlSCNudbHP3Lj7BGfTju+2uSlWnDQ2uuLJev/ku8tg=
 golang.org/x/exp v0.0.0-20240416160154-fe59bbe5cc7f h1:99ci1mjWVBWwJiEKYY6jWa4d2nTQVIEhZIptnrVb1XY=
 golang.org/x/exp v0.0.0-20240416160154-fe59bbe5cc7f/go.mod h1:/lliqkxwWAhPjf5oSOIJup2XcqJaw8RGS6k3TGEc7GI=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=

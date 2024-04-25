@@ -6,7 +6,7 @@ GOGET = $(GOCMD) get
 GOMOD = $(GOCMD) mod
 GOFMT = $(GOCMD) fmt
 GOVET = $(GOCMD) vet
-BINNAME = libra-import
+BINNAME = libra-work-import
 CMDDIR = cmd
 
 build: darwin
