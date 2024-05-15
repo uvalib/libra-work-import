@@ -7,7 +7,7 @@ package main
 import (
 	"fmt"
 	"github.com/uvalib/easystore/uvaeasystore"
-	librametadata "github.com/uvalib/libra-metadata"
+	"github.com/uvalib/libra-metadata"
 	"sort"
 	"strconv"
 	"strings"
@@ -89,7 +89,7 @@ func libraEtdMetadata(indir string) (librametadata.ETDWork, importExtras, error)
 		return meta, extra, err
 	}
 
-	meta.Department, err = extractString("department", omap["department"])
+	meta.Program, err = extractString("degree", omap["degree"])
 	if err != nil {
 		logWarning(err.Error())
 	}
@@ -319,8 +319,7 @@ func libraEtdAuthor(omap map[string]interface{}) (librametadata.ContributorData,
 		logWarning(err.Error())
 	}
 
-	// FIXME ???
-	author.Program, err = extractString("degree", omap["degree"])
+	author.Department, err = extractString("department", omap["department"])
 	if err != nil {
 		logWarning(err.Error())
 	}
