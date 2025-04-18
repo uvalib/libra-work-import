@@ -18,7 +18,6 @@ func main() {
 	var mode string
 	var namespace string
 	var inDir string
-	var importMode string
 	var debug bool
 	var excludeFiles bool
 	var dryRun bool
@@ -28,7 +27,6 @@ func main() {
 	flag.StringVar(&mode, "mode", "postgres", "Mode, sqlite, postgres, s3")
 	flag.StringVar(&namespace, "namespace", "", "Namespace to import")
 	flag.StringVar(&inDir, "importdir", "", "Import directory")
-	flag.StringVar(&importMode, "importmode", "", "Import mode, either etd or open")
 	flag.BoolVar(&debug, "debug", false, "Log debug information")
 	flag.BoolVar(&excludeFiles, "nofiles", false, "Do not import files")
 	flag.BoolVar(&dryRun, "dryrun", false, "Process but do not actually import")
@@ -48,11 +46,6 @@ func main() {
 	_, err := os.Stat(inDir)
 	if err != nil {
 		logError(fmt.Sprintf("import dir does not exist or is not readable (%s)", err.Error()))
-		os.Exit(1)
-	}
-
-	if importMode != "etd" && importMode != "open" {
-		logError("import mode must be etd|open")
 		os.Exit(1)
 	}
 
@@ -135,11 +128,7 @@ func main() {
 			dirname := fmt.Sprintf("%s/%s", inDir, i.Name())
 			logInfo(fmt.Sprintf("importing from %s", dirname))
 
-			if importMode == "etd" {
-				obj, err = makeEtdObject(namespace, dirname, excludeFiles)
-			} else {
-				obj, err = makeOpenObject(namespace, dirname, excludeFiles)
-			}
+			obj, err = makeEtdObject(namespace, dirname, excludeFiles)
 
 			if err != nil {
 				logError(fmt.Sprintf("creating object (%s), continuing", err.Error()))

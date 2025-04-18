@@ -159,27 +159,6 @@ func fileExists(filename string) bool {
 	return err == nil || errors.Is(err, os.ErrNotExist) == false
 }
 
-func loadEmbargo(indir string) (*EmbargoDetails, error) {
-	fname := fmt.Sprintf("%s/embargo.json", indir)
-	exists := fileExists(fname)
-	if exists == false {
-		return nil, os.ErrNotExist
-	}
-
-	buf, err := loadFile(fname)
-	if err != nil {
-		return nil, err
-	}
-
-	var embargo EmbargoDetails
-	err = json.Unmarshal(buf, &embargo)
-	if err != nil {
-		return nil, err
-	}
-
-	return &embargo, nil
-}
-
 func interfaceToMap(i interface{}) (map[string]interface{}, error) {
 
 	// assume we are being passed a []byte
