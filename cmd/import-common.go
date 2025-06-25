@@ -88,21 +88,30 @@ func importBlobs(namespace string, indir string) ([]uvaeasystore.EasyStoreBlob, 
 			return nil, err
 		}
 
-		blob, err = makeBlobObject(namespace, buf)
-		if err != nil {
-			return nil, err
-		}
-		// some cases where we have bad files
-		if len(blob.Name()) != 0 {
-			blob, err = loadBlobContent(indir, blob)
-			if err != nil {
-				return nil, err
-			}
+		// extract the blob filename
+		fname := extractName(buf)
 
-			// and add to the list
-			blobs = append(blobs, blob)
+		// some cases where we have bad files
+		if len(fname) != 0 {
+
+			// other cases where we have multiple references to the same file
+			if blobExists(blobs, fname) == false {
+				blob, err = loadBlob(indir, fname)
+				if err == nil {
+					// and add to the list
+					blobs = append(blobs, blob)
+				} else {
+					if errors.Is(err, os.ErrNotExist) {
+						logWarning(fmt.Sprintf("file not found (%s/%s), skipping", indir, fname))
+					} else {
+						return nil, err
+					}
+				}
+			} else {
+				logWarning(fmt.Sprintf("duplicate blob name, skipping"))
+			}
 		} else {
-			logWarning(fmt.Sprintf("empty blob name, skipping"))
+			logWarning(fmt.Sprintf("bad/empty blob name, skipping"))
 		}
 		ix++
 		exists = fileExists(fmt.Sprintf("%s/fileset-%d.json", indir, ix))
@@ -110,40 +119,45 @@ func importBlobs(namespace string, indir string) ([]uvaeasystore.EasyStoreBlob, 
 	return blobs, nil
 }
 
-func makeBlobObject(namespace string, i interface{}) (uvaeasystore.EasyStoreBlob, error) {
+func extractName(i interface{}) string {
 
 	// convert to a map
 	omap, err := interfaceToMap(i)
 	if err != nil {
-		return nil, err
+		return ""
 	}
 
-	title, err := extractFirstString("title", omap["title"])
+	name, err := extractFirstString("title", omap["title"])
 	if err != nil {
-		return nil, err
+		return ""
 	}
-	blob := libraBlob{
-		name: title,
-	}
-
-	return blob, nil
+	return name
 }
 
-func loadBlobContent(indir string, blob uvaeasystore.EasyStoreBlob) (uvaeasystore.EasyStoreBlob, error) {
+func loadBlob(indir string, name string) (uvaeasystore.EasyStoreBlob, error) {
 
-	filename := fmt.Sprintf("%s/%s", indir, blob.Name())
+	filename := fmt.Sprintf("%s/%s", indir, name)
 	buf, err := loadFile(filename)
 	if err != nil {
 		return nil, err
 	}
 
-	// we know it's one of these
-	b := blob.(libraBlob)
+	// attempt to determine the content type
+	mt := http.DetectContentType(buf)
 
-	// set the fields
-	b.mimeType = http.DetectContentType(buf)
-	b.payload = buf
-	return b, nil
+	// some cases of embedded leading/trailing whitespace, who knew
+	name = strings.TrimSpace(name)
+
+	return uvaeasystore.NewEasyStoreBlob(name, mt, buf), nil
+}
+
+func blobExists(blobs []uvaeasystore.EasyStoreBlob, name string) bool {
+	for _, blob := range blobs {
+		if blob.Name() == name {
+			return true
+		}
+	}
+	return false
 }
 
 func loadFile(filename string) ([]byte, error) {
@@ -211,7 +225,7 @@ func extractString(name string, i interface{}) (string, error) {
 	return field, nil
 }
 
-// take a cleaned up embargo date and determine if it is in the future
+// take a cleaned-up embargo date and determine if it is in the future
 func inTheFuture(datetime string) bool {
 	if len(datetime) == 0 {
 		return false

@@ -54,16 +54,22 @@ func main() {
 		os.Exit(1)
 	}
 
-	var config uvaeasystore.EasyStoreConfig
+	var implConfig uvaeasystore.EasyStoreImplConfig
+	var proxyConfig uvaeasystore.EasyStoreProxyConfig
+
+	// the easystore (or the proxy)
+	var es uvaeasystore.EasyStore
 
 	switch mode {
 	case "sqlite":
-		config = uvaeasystore.DatastoreSqliteConfig{
+		implConfig = uvaeasystore.DatastoreSqliteConfig{
 			DataSource: os.Getenv("SQLITEFILE"),
 			Log:        logger,
 		}
+		es, err = uvaeasystore.NewEasyStore(implConfig)
+
 	case "postgres":
-		config = uvaeasystore.DatastorePostgresConfig{
+		implConfig = uvaeasystore.DatastorePostgresConfig{
 			DbHost:     os.Getenv("DBHOST"),
 			DbPort:     asIntWithDefault(os.Getenv("DBPORT"), 0),
 			DbName:     os.Getenv("DBNAME"),
@@ -72,23 +78,36 @@ func main() {
 			DbTimeout:  asIntWithDefault(os.Getenv("DBTIMEOUT"), 0),
 			Log:        logger,
 		}
+		es, err = uvaeasystore.NewEasyStore(implConfig)
+
 	case "s3":
-		config = uvaeasystore.DatastoreS3Config{
-			Bucket:     os.Getenv("BUCKET"),
-			DbHost:     os.Getenv("DBHOST"),
-			DbPort:     asIntWithDefault(os.Getenv("DBPORT"), 0),
-			DbName:     os.Getenv("DBNAME"),
-			DbUser:     os.Getenv("DBUSER"),
-			DbPassword: os.Getenv("DBPASS"),
-			DbTimeout:  asIntWithDefault(os.Getenv("DBTIMEOUT"), 0),
-			Log:        logger,
+		implConfig = uvaeasystore.DatastoreS3Config{
+			Bucket:              os.Getenv("BUCKET"),
+			SignerExpireMinutes: asIntWithDefault(os.Getenv("SIGNEXPIRE"), 60),
+			DbHost:              os.Getenv("DBHOST"),
+			DbPort:              asIntWithDefault(os.Getenv("DBPORT"), 0),
+			DbName:              os.Getenv("DBNAME"),
+			DbUser:              os.Getenv("DBUSER"),
+			DbPassword:          os.Getenv("DBPASS"),
+			DbTimeout:           asIntWithDefault(os.Getenv("DBTIMEOUT"), 0),
+			BusName:             os.Getenv("BUSNAME"),
+			SourceName:          os.Getenv("SOURCENAME"),
+			Log:                 logger,
 		}
+		es, err = uvaeasystore.NewEasyStore(implConfig)
+
+	case "proxy":
+		proxyConfig = uvaeasystore.ProxyConfigImpl{
+			ServiceEndpoint: os.Getenv("ESENDPOINT"),
+			Log:             logger,
+		}
+		es, err = uvaeasystore.NewEasyStoreProxy(proxyConfig)
+
 	default:
 		logError(fmt.Sprintf("unsupported mode (%s)", mode))
 		os.Exit(1)
 	}
 
-	es, err := uvaeasystore.NewEasyStore(config)
 	if err != nil {
 		logError(fmt.Sprintf("creating easystore (%s)", err.Error()))
 		os.Exit(1)
@@ -116,7 +135,8 @@ func main() {
 	}
 
 	// go through our list
-	for _, i := range items {
+	total := len(items)
+	for ix, i := range items {
 		if i.IsDir() == true {
 
 			// if we are limiting our import count
@@ -126,7 +146,7 @@ func main() {
 			}
 
 			dirname := fmt.Sprintf("%s/%s", inDir, i.Name())
-			logInfo(fmt.Sprintf("importing from %s", dirname))
+			logInfo(fmt.Sprintf("importing from %s (%d of %d)", dirname, ix+1, total))
 
 			obj, err = makeEtdObject(namespace, dirname, excludeFiles)
 

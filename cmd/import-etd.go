@@ -46,10 +46,7 @@ func makeEtdObject(namespace string, indir string, excludeFiles bool) (uvaeasyst
 	}
 
 	// create our store metadata object
-	metadata := libraMetadata{
-		mimeType: domainMetadata.MimeType(),
-		payload:  buf,
-	}
+	metadata := uvaeasystore.NewEasyStoreMetadata(domainMetadata.MimeType(), buf)
 
 	// assign fields and serialized metadata
 	obj.SetFields(fields)
@@ -91,17 +88,17 @@ func libraEtdMetadata(indir string) (librametadata.ETDWork, importExtras, error)
 
 	meta.Program, err = extractString("degree", omap["degree"])
 	if err != nil {
-		logWarning(err.Error())
+		logDebug(err.Error())
 	}
 
 	meta.Degree, err = extractString("degree", omap["degree"])
 	if err != nil {
-		logWarning(err.Error())
+		logDebug(err.Error())
 	}
 
 	meta.Title, err = extractFirstString("title", omap["title"])
 	if err != nil {
-		logWarning(err.Error())
+		logDebug(err.Error())
 	}
 
 	// meta.Author handled below
@@ -110,69 +107,69 @@ func libraEtdMetadata(indir string) (librametadata.ETDWork, importExtras, error)
 
 	meta.Abstract, err = extractString("description", omap["description"])
 	if err != nil {
-		logWarning(err.Error())
+		logDebug(err.Error())
 	}
 
 	rights, err := extractFirstString("rights", omap["rights"])
 	if err != nil {
-		logWarning(err.Error())
+		logDebug(err.Error())
 	}
 
 	meta.License, meta.LicenseURL = libraEtdRights(rights)
 
 	meta.Keywords, err = extractStringArray("keyword", omap["keyword"])
 	if err != nil {
-		logWarning(err.Error())
+		logDebug(err.Error())
 	}
 
 	meta.Language, err = extractString("language", omap["language"])
 	if err != nil {
-		logWarning(err.Error())
+		logDebug(err.Error())
 	}
 
 	meta.RelatedURLs, err = extractStringArray("related_url", omap["related_url"])
 	if err != nil {
-		logWarning(err.Error())
+		logDebug(err.Error())
 	}
 
 	extra.pubDate, err = extractString("date_published", omap["date_published"])
 	if err != nil {
-		logWarning(err.Error())
+		logDebug(err.Error())
 	}
 
 	meta.Sponsors, err = extractStringArray("sponsoring_agency", omap["sponsoring_agency"])
 	if err != nil {
-		logWarning(err.Error())
+		logDebug(err.Error())
 	}
 
 	meta.Notes, err = extractString("notes", omap["notes"])
 	if err != nil {
-		logWarning(err.Error())
+		logDebug(err.Error())
 	}
 
 	extra.depositor, err = extractString("depositor", omap["depositor"])
 	if err != nil {
-		logWarning(err.Error())
+		logDebug(err.Error())
 	}
 
 	meta.Author, err = libraEtdAuthor(omap)
 	if err != nil {
-		logWarning(err.Error())
+		logDebug(err.Error())
 	}
 
 	meta.Advisors, err = libraEtdAdvisors(omap)
 	if err != nil {
-		logWarning(err.Error())
+		logDebug(err.Error())
 	}
 
 	extra.defaultVis, err = extractString("embargo_state", omap["embargo_state"])
 	if err != nil {
-		logWarning(err.Error())
+		logDebug(err.Error())
 	}
 
 	extra.createDate, err = extractString("date_created", omap["date_created"])
 	if err != nil {
-		logWarning(err.Error())
+		logDebug(err.Error())
 	}
 
 	//
@@ -181,22 +178,22 @@ func libraEtdMetadata(indir string) (librametadata.ETDWork, importExtras, error)
 
 	extra.adminNotes, err = extractStringArray("admin_notes", omap["admin_notes"])
 	if err != nil {
-		logWarning(err.Error())
+		logDebug(err.Error())
 	}
 
 	extra.doi, err = extractString("permanent_url", omap["permanent_url"])
 	if err != nil {
-		logWarning(err.Error())
+		logDebug(err.Error())
 	}
 
 	extra.depositor, err = extractString("depositor", omap["depositor"])
 	if err != nil {
-		logWarning(err.Error())
+		logDebug(err.Error())
 	}
 
 	extra.embargoRelease, err = extractString("embargo_end_date", omap["embargo_end_date"])
 	if err != nil {
-		logWarning(err.Error())
+		logDebug(err.Error())
 	}
 
 	extra.embargoVisDuring = extra.defaultVis
@@ -204,12 +201,12 @@ func libraEtdMetadata(indir string) (librametadata.ETDWork, importExtras, error)
 
 	extra.createDate, err = extractString("date_created", omap["date_created"])
 	if err != nil {
-		logWarning(err.Error())
+		logDebug(err.Error())
 	}
 
 	extra.source, err = extractString("work_source", omap["work_source"])
 	if err != nil {
-		logWarning(err.Error())
+		logDebug(err.Error())
 	}
 
 	//logEtdMetadata(meta)
@@ -305,28 +302,28 @@ func libraEtdAuthor(omap map[string]interface{}) (librametadata.ContributorData,
 
 	author.ComputeID, err = extractString("author_email", omap["author_email"])
 	if err != nil {
-		logWarning(err.Error())
+		logDebug(err.Error())
 	}
 	author.ComputeID = strings.Replace(author.ComputeID, "@virginia.edu", "", -1)
 
 	author.FirstName, err = extractString("author_first_name", omap["author_first_name"])
 	if err != nil {
-		logWarning(err.Error())
+		logDebug(err.Error())
 	}
 
 	author.LastName, err = extractString("author_last_name", omap["author_last_name"])
 	if err != nil {
-		logWarning(err.Error())
+		logDebug(err.Error())
 	}
 
 	author.Department, err = extractString("department", omap["department"])
 	if err != nil {
-		logWarning(err.Error())
+		logDebug(err.Error())
 	}
 
 	author.Institution, err = extractString("author_institution", omap["author_institution"])
 	if err != nil {
-		logWarning(err.Error())
+		logDebug(err.Error())
 	}
 
 	return author, nil
@@ -337,7 +334,7 @@ func libraEtdAdvisors(omap map[string]interface{}) ([]librametadata.ContributorD
 	advisors := make([]librametadata.ContributorData, 0)
 	contributors, err := extractStringArray("contributor", omap["contributor"])
 	if err != nil {
-		logWarning(err.Error())
+		logDebug(err.Error())
 		return advisors, nil
 	}
 
