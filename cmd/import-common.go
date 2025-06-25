@@ -98,6 +98,8 @@ func importBlobs(namespace string, indir string) ([]uvaeasystore.EasyStoreBlob, 
 			if blobExists(blobs, fname) == false {
 				blob, err = loadBlob(indir, fname)
 				if err == nil {
+					pl, _ := blob.Payload()
+					logInfo(fmt.Sprintf("file %s (%d bytes)", blob.Name(), len(pl)))
 					// and add to the list
 					blobs = append(blobs, blob)
 				} else {
