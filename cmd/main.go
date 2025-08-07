@@ -61,12 +61,12 @@ func main() {
 	var es uvaeasystore.EasyStore
 
 	switch mode {
-	case "sqlite":
-		implConfig = uvaeasystore.DatastoreSqliteConfig{
-			DataSource: os.Getenv("SQLITEFILE"),
-			Log:        logger,
-		}
-		es, err = uvaeasystore.NewEasyStore(implConfig)
+	//	case "sqlite":
+	//		implConfig = uvaeasystore.DatastoreSqliteConfig{
+	//			DataSource: os.Getenv("SQLITEFILE"),
+	//			Log:        logger,
+	//		}
+	//		es, err = uvaeasystore.NewEasyStore(implConfig)
 
 	case "postgres":
 		implConfig = uvaeasystore.DatastorePostgresConfig{
@@ -84,6 +84,8 @@ func main() {
 		implConfig = uvaeasystore.DatastoreS3Config{
 			Bucket:              os.Getenv("BUCKET"),
 			SignerExpireMinutes: asIntWithDefault(os.Getenv("SIGNEXPIRE"), 60),
+			SignerAccessKey:     os.Getenv("SIGNER_ACCESS_KEY"),
+			SignerSecretKey:     os.Getenv("SIGNER_SECRET_KEY"),
 			DbHost:              os.Getenv("DBHOST"),
 			DbPort:              asIntWithDefault(os.Getenv("DBPORT"), 0),
 			DbName:              os.Getenv("DBNAME"),
@@ -158,7 +160,7 @@ func main() {
 
 			// if we are configured to import
 			if dryRun == false {
-				_, err = es.Create(obj)
+				_, err = es.ObjectCreate(obj)
 				if err != nil {
 					logError(fmt.Sprintf("importing ns/oid [%s/%s] (%s), continuing", obj.Namespace(), obj.Id(), err.Error()))
 					errCount++
