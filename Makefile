@@ -14,10 +14,10 @@ build: darwin
 all: darwin linux
 
 darwin:
-	CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 $(GOBUILD) -a -tags service -o bin/$(BINNAME).darwin $(CMDDIR)/*.go
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 $(GOBUILD) -a -tags service -o bin/$(BINNAME).darwin $(CMDDIR)/*.go
 
 linux:
-	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 $(GOBUILD) -a -tags service -installsuffix cgo -o bin/$(BINNAME).linux $(CMDDIR)/*.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -a -tags service -installsuffix cgo -o bin/$(BINNAME).linux $(CMDDIR)/*.go
 
 clean:
 	$(GOCLEAN)
